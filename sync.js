@@ -1,7 +1,4 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getFirestore,
   doc,
@@ -18,32 +15,30 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const cfg = window.FIREBASE_CONFIG;
+const cfg=window.FIREBASE_CONFIG;
 
 if(
   cfg &&
   cfg.apiKey &&
   cfg.authDomain &&
   cfg.projectId &&
-  cfg.appId &&
-  !String(cfg.apiKey).startsWith("PASTE")
+  cfg.appId
 ){
 
-  const app = initializeApp(cfg);
+  const app=initializeApp(cfg);
 
-  const db = getFirestore(app);
+  const db=getFirestore(app);
+  const auth=getAuth(app);
 
-  const auth = getAuth(app);
-
-  window.SYNC = {
+  window.SYNC={
 
     watch:(k,ok,err)=>
       onSnapshot(
         doc(db,"app",k),
         s=>ok(
           s.exists()
-            ? s.data()
-            : null
+           ?s.data()
+           :null
         ),
         err
       ),
@@ -68,9 +63,7 @@ if(
       onAuthStateChanged(
         auth,
         u=>cb(
-          u
-            ? u.email
-            : null
+          u?u.email:null
         )
       ),
 
@@ -82,26 +75,20 @@ if(
 
     create:async(e,p)=>{
 
-      const app2=initializeApp(
-        cfg,
-        "create-"+Date.now()
+      const a2=getAuth(
+        initializeApp(
+          cfg,
+          "create-"+Date.now()
+        )
       );
 
-      const auth2=getAuth(app2);
-
       await createUserWithEmailAndPassword(
-        auth2,
+        a2,
         e,
         p
       );
     }
   };
-
-}else{
-
-  console.error(
-    "Firebase configuration is missing or invalid."
-  );
 }
 
 window.__syncReady=true;
