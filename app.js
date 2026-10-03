@@ -217,6 +217,15 @@ let DB=false;
 let READY=false;
 const SENT={};
 
+/* Firebase sync state.
+ * A document may be written only after its listener has successfully
+ * delivered an initial snapshot. This prevents a temporary listener
+ * error from overwriting real cloud data with local seed data.
+ */
+const SYNC_OK=new Set();
+const SYNC_RETRY={};
+const SYNC_UNSUB={};
+
 const DOCS={
  users:()=>({
   items:S.users.map(u=>{
@@ -272,22 +281,23 @@ const save=()=>{
   return;
  }
 
- if(!READY)return;
+ /* Only documents whose listeners are healthy are written. */
+ if(!window.SYNC||!SYNC.set)return;
 
- for(const k in DOCS){
+ for(const k of SYNC_OK){
+  if(!DOCS[k])continue;
+
   const b=DOCS[k]();
   const j=JSON.stringify(b);
 
   if(SENT[k]!==j){
    SENT[k]=j;
 
-   if(window.SYNC&&SYNC.set){
-    SYNC.set(k,b).catch(e=>{
-     SENT[k]=null;
-     toast('Not saved. Check your internet and sign in again.');
-     console.error(e);
-    });
-   }
+   SYNC.set(k,b).catch(e=>{
+    SENT[k]=null;
+    console.error('Firestore save error:',k,e);
+    toast('Not saved. Check your internet and try again.');
+   });
   }
  }
 };
@@ -371,12 +381,6 @@ function fill(e){
  $('#pw').value=DB?'':(u.pw||'246810');
 }
 
-/*
- * LOGIN
- * Firebase first.
- * If Firebase is temporarily unavailable, the original
- * hardcoded/demo account can still open the portal.
- */
 async function login(){
 
  if(!READY&&!DB){
@@ -404,11 +408,6 @@ async function login(){
 
    console.warn('Firebase login failed:',e);
 
-   /*
-    * Demo fallback.
-    * This keeps the original portal usable if Firebase
-    * authentication is not yet created for that account.
-    */
    const u=S.users.find(
     x=>x.email.toLowerCase()===em &&
        x.pw===pw
@@ -1972,6 +1971,7 @@ function userForm(){
   },
   'Add user'
  );
+}
 
 /* modal helpers */
 
@@ -2184,17 +2184,20 @@ function migrate(){
   h:[
    T(
     'Complaint registered',
-    'Kunal’s official email ID was hacked. The IT team has registered this as a high-severity case.','03 Oct 2026, 09:15'
+    'Kunal’s official email ID was hacked. The IT team has registered this as a high-severity case.',
+    '03 Oct 2026, 09:15'
    ),
 
    T(
     'Investigation completed',
-    'The IT team traced the unauthorised access. Sonali and Anamika are identified as the main masterminds. Access records are preserved as evidence.','03 Oct 2026, 11:30'
+    'The IT team traced the unauthorised access. Sonali and Anamika are identified as the main masterminds. Access records are preserved as evidence.',
+    '03 Oct 2026, 11:30'
    ),
 
    T(
     'Forwarded to HOD',
-    'Investigation is complete. Please review the findings, decide the action and announce it. The Chairman has been informed.','03 Oct 2026, 12:00'
+    'Investigation is complete. Please review the findings, decide the action and announce it. The Chairman has been informed.',
+    '03 Oct 2026, 12:00'
    )
   ]
  };
@@ -2319,6 +2322,7 @@ function delPen(id){
    S.pen=S.pen.filter(x=>x.id!==id);
    log('Deleted a penalty');
    save();
+   cm();
    go('penalties');
    toast('Deleted');
   }
@@ -2401,7 +2405,6 @@ function editEmp(id){
   },
   'Save changes'
  );
-
 }
 
 function ready(){
@@ -2428,65 +2431,31 @@ function ready(){
  }
 }
 
-function refresh(){
-
- if(!ME)return;
-
- const u=S.users.find(
-  x=>x.id===ME.id
- );
-
- if(!u){
-  toast('Your account was removed.');
-  logout();
-  return;
- }
-
- ME=u;
-
- $('#meN').textContent=u.name;
- $('#meR').textContent=u.role;
-
- chips();
-
- if(
-  !$('#mo').classList.contains('on')&&
-  view!=='employees'
- ){
-  go(view);
- }
- else if(view==='employees'){
-  go(view);
- }
-}
-
 let UNS=[];
 let WATCH=0;
 
 /*
- * IMPORTANT FIREBASE FIX
+ * Firebase listener management.
  *
- * Original version waited forever for all listeners.
- * This version counts both successful responses and
- * listener errors, so the login screen cannot remain
- * permanently stuck on "Connecting to shared data..."
+ * Every Firestore document gets its own listener.
+ * A listener error no longer freezes the whole portal.
+ * The failed listener is automatically attached again.
  */
 
 function watchAll(email){
 
  WATCH=1;
-
- let n=0;
- let started=false;
+ READY=false;
 
  const K=Object.keys(DOCS);
+ let initialDone=0;
+ let started=false;
 
  const startPortal=()=>{
 
   if(started)return;
 
   started=true;
-
   READY=true;
 
   try{
@@ -2517,30 +2486,48 @@ function watchAll(email){
   start(u,1);
  };
 
- const responseDone=()=>{
-  n++;
+ const initialResponse=()=>{
 
-  if(n>=K.length){
+  initialDone++;
+
+  if(initialDone>=K.length)
    startPortal();
-  }
  };
 
- UNS=K.map(k=>
+ const attach=k=>{
 
-  SYNC.watch(
+  if(!window.SYNC||!SYNC.watch)
+   return;
+
+  if(SYNC_UNSUB[k]){
+
+   try{
+    SYNC_UNSUB[k]();
+   }catch(e){}
+
+   delete SYNC_UNSUB[k];
+  }
+
+  const first=
+   !Object.prototype.hasOwnProperty.call(
+    SENT,
+    k
+   );
+
+  SYNC_UNSUB[k]=SYNC.watch(
 
    k,
 
    d=>{
 
-    const first=!(k in SENT);
-    let ch=false;
+    const wasReady=SYNC_OK.has(k);
 
     if(d){
 
-     const o=JSON.stringify(
-      DOCS[k]()
-     );
+     const before=
+      JSON.stringify(
+       DOCS[k]()
+      );
 
      APPLY[k](
       JSON.parse(
@@ -2548,23 +2535,52 @@ function watchAll(email){
       )
      );
 
-     const w=JSON.stringify(
-      DOCS[k]()
-     );
+     const after=
+      JSON.stringify(
+       DOCS[k]()
+      );
 
-     ch=o!==w;
-     SENT[k]=w;
+     SENT[k]=after;
 
-    }else if(first){
+     SYNC_OK.add(k);
 
-     SENT[k]=null;
+     if(first&&!wasReady)
+      initialResponse();
+
+     if(
+      READY&&
+      before!==after
+     ){
+      pill();
+      refresh();
+     }
+
+    }else{
+
+     /*
+      * Empty Firestore document is valid.
+      * Mark it synced but do not write anything immediately.
+      */
+     SYNC_OK.add(k);
+
+     if(first){
+
+      SENT[k]=
+       JSON.stringify(
+        DOCS[k]()
+       );
+
+      initialResponse();
+     }
     }
 
-    responseDone();
+    if(SYNC_RETRY[k]){
 
-    if(READY&&ch){
-     pill();
-     refresh();
+     clearTimeout(
+      SYNC_RETRY[k]
+     );
+
+     delete SYNC_RETRY[k];
     }
    },
 
@@ -2576,27 +2592,76 @@ function watchAll(email){
      e
     );
 
-    responseDone();
+    /*
+     * Never save this document while its listener
+     * is unhealthy.
+     */
+    SYNC_OK.delete(k);
+
+    if(first)
+     initialResponse();
 
     toast(
      'Live data error on '+
      k+
      ': '+
-     (e.code||'check Firebase')
+     (
+      e&&e.code
+       ?e.code
+       :'check Firebase'
+     )
     );
-   }
 
-  )
- );
+    /*
+     * Firestore listeners terminate after an error.
+     * Reattach automatically.
+     */
+    if(!SYNC_RETRY[k]){
+
+     SYNC_RETRY[k]=setTimeout(
+      ()=>{
+
+       delete SYNC_RETRY[k];
+
+       if(
+        WATCH&&
+        window.SYNC
+       )
+        attach(k);
+
+      },
+      3000
+     );
+    }
+   }
+  );
+ };
+
+ K.forEach(attach);
 }
 
 function unwatch(){
 
- UNS.forEach(
-  f=>f&&f()
- );
+ Object.keys(SYNC_RETRY).forEach(k=>{
 
- UNS=[];
+  clearTimeout(
+   SYNC_RETRY[k]
+  );
+
+  delete SYNC_RETRY[k];
+ });
+
+ Object.keys(SYNC_UNSUB).forEach(k=>{
+
+  try{
+   SYNC_UNSUB[k]();
+  }catch(e){}
+
+  delete SYNC_UNSUB[k];
+ });
+
+ SYNC_OK.clear();
+
  WATCH=0;
  READY=false;
 
@@ -2607,6 +2672,7 @@ function unwatch(){
 function boot(){
 
  if(!window.SYNC){
+
   offline();
   return;
  }
@@ -2657,7 +2723,7 @@ function fixUsers(){
 
  const all=
   V1+
-  ' tokens access builder complaint enquiry review forward announce penedit finedit fulledit comment status sitebuild tokedit';
+  ' tokens access builder complaint enquiry review forward announce penedit finedit fulledit comment status tokedit sitebuild';
 
  const N=[
   [
