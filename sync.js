@@ -1,4 +1,7 @@
-import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
 import {
   getFirestore,
   doc,
@@ -15,83 +18,153 @@ import {
   sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const cfg=window.FIREBASE_CONFIG;
 
-if(
+const cfg = window.FIREBASE_CONFIG;
+
+
+/* ================================
+   FIREBASE INITIALIZATION
+   ================================ */
+
+if (
   cfg &&
   cfg.apiKey &&
   cfg.authDomain &&
   cfg.projectId &&
   cfg.appId
-){
+) {
 
-  const app=initializeApp(cfg);
+  const app = initializeApp(cfg);
 
-  const db=getFirestore(app);
-  const auth=getAuth(app);
+  const db = getFirestore(app);
 
-  window.SYNC={
+  const auth = getAuth(app);
 
-    watch:(k,ok,err)=>
-      onSnapshot(
-        doc(db,"app",k),
-        s=>ok(
-          s.exists()
-           ?s.data()
-           :null
-        ),
-        err
-      ),
 
-    set:(k,d)=>
-      setDoc(
-        doc(db,"app",k),
-        d
-      ),
+  /* ================================
+     SHARED FIRESTORE + AUTH API
+     ================================ */
 
-    login:(e,p)=>
-      signInWithEmailAndPassword(
-        auth,
-        e,
-        p
-      ),
+  window.SYNC = {
 
-    logout:()=>
-      signOut(auth),
+    /* Listen to a Firestore document */
+    watch: (key, success, error) => {
 
-    who:cb=>
-      onAuthStateChanged(
-        auth,
-        u=>cb(
-          u?u.email:null
-        )
-      ),
+      return onSnapshot(
+        doc(db, "app", key),
 
-    reset:e=>
-      sendPasswordResetEmail(
-        auth,
-        e
-      ),
+        snapshot => {
 
-    create:async(e,p)=>{
+          success(
+            snapshot.exists()
+              ? snapshot.data()
+              : null
+          );
 
-      const a2=getAuth(
-        initializeApp(
-          cfg,
-          "create-"+Date.now()
-        )
+        },
+
+        error
+
       );
+
+    },
+
+
+    /* Save data to Firestore */
+    set: (key, data) => {
+
+      return setDoc(
+        doc(db, "app", key),
+        data
+      );
+
+    },
+
+
+    /* Firebase login */
+    login: (email, password) => {
+
+      return signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+    },
+
+
+    /* Firebase logout */
+    logout: () => {
+
+      return signOut(auth);
+
+    },
+
+
+    /* Current Firebase user */
+    who: callback => {
+
+      return onAuthStateChanged(
+        auth,
+
+        user => {
+
+          callback(
+            user
+              ? user.email
+              : null
+          );
+
+        }
+
+      );
+
+    },
+
+
+    /* Password reset */
+    reset: email => {
+
+      return sendPasswordResetEmail(
+        auth,
+        email
+      );
+
+    },
+
+
+    /* Create Firebase user */
+    create: async (email, password) => {
+
+      const newApp = initializeApp(
+        cfg,
+        "create-" + Date.now()
+      );
+
+      const newAuth = getAuth(newApp);
 
       await createUserWithEmailAndPassword(
-        a2,
-        e,
-        p
+        newAuth,
+        email,
+        password
       );
+
     }
+
   };
+
+} else {
+
+  console.error(
+    "Firebase configuration is missing or invalid."
+  );
+
 }
 
-window.__syncReady=true;
+
+/* Tell app.js that sync.js has loaded */
+
+window.__syncReady = true;
 
 window.dispatchEvent(
   new Event("sync-ready")
