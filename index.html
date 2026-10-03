@@ -107,7 +107,7 @@ td.c{text-align:center}
   <div class="me"><b id="meN"></b><span id="meR"></span><br><button class="btn" style="margin-top:8px;padding:4px 10px" onclick="logout()">Sign out</button></div></aside>
  <main><header><button class="btn" id="menu" onclick="sb.classList.toggle('open')" aria-label="Menu">☰</button>
   <input class="srch" placeholder="Search employees..." onkeydown="if(event.key==='Enter'&&can('employees')){E.q=this.value;E.p=0;go('employees')}">
-  <span class="sp"></span><button class="btn" onclick="theme()">◐ Theme</button></header><div id="c"></div></main>
+  <span class="sp"></span><span class="tg" id="pill" title="Shows whether this device is connected to the shared data">...</span><button class="btn" onclick="theme()">◐ Theme</button></header><div id="c"></div></main>
 </div>
 <div id="mo"><div class="md"><header><h3 id="mt"></h3><button class="btn" onclick="cm()" aria-label="Close">✕</button></header><div id="mb"></div><div id="mf"></div></div></div>
 <div id="ts"></div>
@@ -166,7 +166,7 @@ function fill(e){const u=S.users.find(x=>x.email===e);$('#em').value=u.email;$('
 function login(){if(!READY){$('#le').textContent='Still connecting to shared data. Try again in a moment.';return}const u=S.users.find(x=>x.email.toLowerCase()===$('#em').value.trim().toLowerCase()&&x.pw===$('#pw').value);
  if(!u){$('#le').textContent='Email or password is incorrect. Tap an account above to fill it in.';return}
  try{sessionStorage.setItem('sona_u',u.id)}catch(e){}start(u)}
-function start(u,q){ME=u;$('#le').textContent='';$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#meN').textContent=u.name;$('#meR').textContent=u.role;q||log('Signed in');go('dashboard')}
+function start(u,q){ME=u;$('#le').textContent='';$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#meN').textContent=u.name;$('#meR').textContent=u.role;try{migrate()}catch(e){console.error(e)}q||log('Signed in');go('dashboard')}
 function logout(){try{sessionStorage.removeItem('sona_u')}catch(e){}ME=null;$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#pw').value=''}
 function theme(){const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'}
 
@@ -189,8 +189,8 @@ const E={q:'',d:'All',p:0,n:20};
 function empBody(){const q=E.q.toLowerCase(),l=EMP.filter(e=>(E.d==='All'||e.dept===E.d)&&(e.name+e.id+e.role).toLowerCase().includes(q)),m=Math.max(0,Math.ceil(l.length/E.n)-1);E.p=Math.min(E.p,m);
  $('#eb').innerHTML=l.slice(E.p*E.n,E.p*E.n+E.n).map(e=>`<tr><td>${e.id}</td><td><b>${esc(e.name)}</b></td><td>${esc(e.role)}</td><td>${esc(e.dept)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No employees match. Clear the search or pick another department.</td></tr>';
  $('#ep').innerHTML=`<span>${l.length.toLocaleString('en-IN')} employees · page ${E.p+1} of ${m+1}</span><span class="ac"><button class="btn" onclick="E.p--;empBody()" ${E.p<1?'disabled':''}>Previous</button><button class="btn" onclick="E.p++;empBody()" ${E.p>=m?'disabled':''}>Next</button></span>`}
-const CF={s:'All',m:0};
-function caseBody(){const l=S.cases.filter(c=>(CF.s==='All'||c.st===CF.s)&&(!CF.m||c.holder===ME.office));
+const CF={s:'All',m:0,q:''};
+function caseBody(){const l=S.cases.filter(c=>(CF.s==='All'||c.st===CF.s)&&(!CF.m||c.holder===ME.office)&&(c.id+c.title+c.against+c.dept+JSON.stringify(c.facts||'')).toLowerCase().includes(CF.q));
  $('#cb').innerHTML=l.map(c=>`<tr><td><b>${c.id}</b></td><td>${esc(c.title)}<small>${esc(c.dept)} · ${esc(who(c.against))}</small></td><td>${esc(c.holder)}</td><td>${tag(c.st)}</td><td>${tag(c.sev)}</td><td><button class="btn" style="padding:4px 10px;font-size:12px" onclick="showCase('${c.id}')">Open</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No cases here. Change the filter or register a complaint.</td></tr>'}
 
 const V={
@@ -199,11 +199,12 @@ dashboard(){const open=S.cases.filter(c=>c.st!=='Decision announced').length;
  `<div class="g4">${can('cases')?`<div class="cd kp hl"><small>Open cases</small><div>${open}</div></div><div class="cd kp"><small>With your office</small><div>${mine().length}</div></div>`:''}
  ${can('finance')?`<div class="cd kp"><small>Total account</small><div>${cr(S.total)}</div></div><div class="cd kp"><small>Balance available</small><div>${cr(balance())}</div></div>`:''}
  <div class="cd kp"><small>Employees</small><div>${EMP.length.toLocaleString('en-IN')}</div></div></div>
+ ${can('cases')&&S.cases.some(c=>c.sev==='High'&&c.st!=='Decision announced')?`<div class="cd" style="border-color:var(--er);margin-bottom:16px"><h3>Needs attention: high-severity cases</h3><div class="cb">${S.cases.filter(c=>c.sev==='High'&&c.st!=='Decision announced').map(c=>`<div class="row"><div><b>${c.id}: ${esc(c.title)}</b><small>${esc(route(c))} · ${esc(c.st)}</small></div><button class="btn" style="padding:4px 10px;font-size:12px" onclick="showCase('${c.id}')">Open</button></div>`).join('')}</div></div>`:''}
  <div class="g2">${can('cases')?`<div class="cd"><h3>Cases by stage</h3><div class="cb">${bars(ST.map(s=>{const n=S.cases.filter(c=>c.st===s).length;return[s,n/Math.max(1,S.cases.length)*100,n]}))}</div></div>`:''}
  ${can('finance')?`<div class="cd"><h3>Department budget used</h3><div class="cb">${bars(DN.map(d=>{const p=Math.round(spent(d)/bud(d)*100);return[d,p,p+'%']}))}</div></div>`:''}
  <div class="cd"><h3>Recent activity</h3><div class="cb">${S.log.slice(0,6).map(l=>`<div class="row"><div>${esc(l.a)}<small>${esc(l.u)} · ${esc(l.t)}</small></div></div>`).join('')}</div></div></div>`},
 cases(){setTimeout(caseBody,0);return ph('Cases','Complaints from registration to final decision.',can('complaint')?`<button class="btn p" onclick="complaintForm()">+ Register complaint</button>`:'')+
- `<div class="cd"><h3><span>All cases</span><span class="ac"><select class="srch" style="max-width:190px" onchange="CF.s=this.value;caseBody()">${['All',...ST].map(s=>`<option>${s}</option>`).join('')}</select><label class="ac"><input type="checkbox" onchange="CF.m=this.checked?1:0;caseBody()"> With my office</label></span></h3><div class="tw"><table><thead><tr><th>Case</th><th>Complaint</th><th>With</th><th>Stage</th><th>Severity</th><th></th></tr></thead><tbody id="cb"></tbody></table></div></div>`},
+ `<div class="cd"><h3><span>All cases</span><span class="ac"><input class="srch" style="max-width:200px" placeholder="Search cases" oninput="CF.q=this.value.toLowerCase();caseBody()"><select class="srch" style="max-width:190px" onchange="CF.s=this.value;caseBody()">${['All',...ST].map(s=>`<option>${s}</option>`).join('')}</select><label class="ac"><input type="checkbox" onchange="CF.m=this.checked?1:0;caseBody()"> With my office</label></span></h3><div class="tw"><table><thead><tr><th>Case</th><th>Complaint</th><th>With</th><th>Stage</th><th>Severity</th><th></th></tr></thead><tbody id="cb"></tbody></table></div></div>`},
 penalties(){return ph('Penalty list','Every penalty imposed, and whether fines have been collected.',can('penedit')?`<button class="btn p" onclick="penForm()">+ Add penalty</button>`:'')+
  `<div class="g4"><div class="cd kp"><small>Total penalties</small><div>${S.pen.length}</div></div><div class="cd kp hl"><small>Fines pending</small><div>${inr(S.pen.filter(p=>p.type==='Fine'&&p.st==='Imposed').reduce((s,p)=>s+p.amt,0))}</div></div><div class="cd kp"><small>Fines collected</small><div>${inr(S.pen.filter(p=>p.st==='Collected').reduce((s,p)=>s+p.amt,0))}</div></div></div>
  <div class="cd"><div class="tw"><table><thead><tr><th>Employee</th><th>Penalty</th><th>Amount</th><th>Case</th><th>Imposed by</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>${[...S.pen].reverse().map(p=>`<tr><td><b>${esc(who(p.emp))}</b></td><td>${esc(p.type)}</td><td>${p.amt?inr(p.amt):'-'}</td><td>${esc(p.caseId)}</td><td>${esc(p.by)}</td><td>${dd(p.date)}</td><td>${tag(p.st)}</td><td>${can('finedit')&&p.type==='Fine'&&p.st==='Imposed'?`<button class="btn g" style="padding:4px 10px;font-size:12px" onclick="collect(${p.id})">Mark collected</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`},
@@ -228,8 +229,8 @@ function showCase(id){const c=S.cases.find(x=>x.id===id),b=[];
  can('review')&&b.push(`<button class="btn" onclick="revForm('${id}')">Review & take action</button>`);
  can('forward')&&b.push(`<button class="btn" onclick="fwdForm('${id}')">Forward</button>`);
  can('announce')&&b.push(`<button class="btn g" onclick="decForm('${id}')">Announce decision</button>`);
- modal(`${c.id}: ${esc(c.title)}`,`<div class="ac" style="margin-bottom:8px">${tag(c.st)}${tag(c.sev)}<span class="tg">With ${esc(c.holder)}</span></div>
- <div class="row"><span>Against</span><b>${esc(who(c.against))}</b></div><div class="row"><span>Department</span><b>${esc(c.dept)}</b></div><p style="margin:10px 0">${esc(c.desc)}</p>
+ modal(`${c.id}: ${esc(c.title)}`,`<div class="ac" style="margin-bottom:8px">${tag(c.st)}${tag(c.sev)}<span class="tg">With ${esc(c.holder)}</span></div>${routeHTML(c)}
+ <div class="row"><span>Against</span><b>${esc(who(c.against))}</b></div><div class="row"><span>Department</span><b>${esc(c.dept)}</b></div>${(c.facts||[]).map(f=>`<div class="row"><span>${esc(f[0])}</span><b style="text-align:right">${esc(f[1])}</b></div>`).join('')}<p style="margin:10px 0">${esc(c.desc)}</p>
  <b>Timeline</b><div class="tl">${c.h.map(x=>`<div><b>${esc(x.a)}</b><small>${esc(x.by)} · ${esc(x.t)}</small>${esc(x.n)}</div>`).join('')}</div>`,
  b.join('')||'<span class="hint">You can view this case but not act on it.</span>')}
 function caseForm(id,t,f,fn,lbl){form(t,f,v=>{const c=S.cases.find(x=>x.id===id);fn(c,v);save();log(`${c.id}: ${v._a||t}`);go('cases');showCase(id);toast('Saved')},lbl)}
@@ -270,15 +271,30 @@ function ask(msg,fn){F=[];OK=()=>{cm();fn()};modal('Please confirm',`<p>${esc(ms
 function toast(m){const e=document.createElement('div');e.className='t';e.textContent=m;$('#ts').appendChild(e);setTimeout(()=>e.remove(),2600)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cm()});
 
-function ready(){chips();$('#sy').textContent=DB?'Shared data is on. Every device sees the same cases, penalties and finance.':'Shared data is off in this view, so changes stay in this browser only.';
+function pill(){const e=$('#pill');if(!e)return;e.className='tg '+(DB?'g':'r');e.textContent=DB?'● Live sync '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'}):'○ Offline, this browser only'}
+function offline(){try{const l=JSON.parse(localStorage.getItem(KEY));if(l&&l.users)S=l}catch(e){}READY=true;ready()}
+function route(c){const m=/\(([^)]+)\)\s*$/.exec((c.h[0]||{}).by||'');const r=[m?m[1]:c.dept];c.h.forEach(x=>{if(x.a.startsWith('Forwarded to '))r.push(x.a.slice(13))});return r.join(' → ')}
+function routeHTML(c){return `<div class="ac" style="margin:6px 0 10px"><span class="tg">${esc(route(c))}</span>${c.informed?`<span class="tg g">Chairman informed</span>`:''}</div>`}
+function migrate(){const old=S.cases.find(c=>c.id==='CASE-1004');if(old&&old.v===2)return;
+ const T=(a,n,t)=>({t,by:'Shivani (IT Team)',a,n});
+ const c={v:2,id:'CASE-1004',title:'Email account hack: Kunal’s official mail ID',against:'Sonali and Anamika (main masterminds)',dept:'IT',sev:'High',st:'Under Review',holder:'HOD',informed:'Chairman',
+ facts:[['Registered by','IT Team (Shivani, IT Head)'],['Victim','Kunal'],['Incident','Kunal’s official email ID was hacked and used without his knowledge'],['Main masterminds','Sonali and Anamika'],['Forwarded to','HOD, for review and action'],['Chairman','Informed (view only)']],
+ desc:'Kunal’s official email ID was hacked. The IT team investigated and found that Sonali and Anamika are the main masterminds behind the attack. The IT team has preserved the access records and has now forwarded the case to the HOD to review the findings, decide the action and announce it.',
+ h:[T('Complaint registered','Kunal’s official email ID was hacked. The IT team has registered this as a high-severity case.','03 Oct 2026, 09:15'),
+ T('Investigation completed','The IT team traced the unauthorised access. Sonali and Anamika are identified as the main masterminds. Access records are preserved as evidence.','03 Oct 2026, 11:30'),
+ T('Forwarded to HOD','Investigation is complete. Please review the findings, decide the action and announce it. The Chairman has been informed.','03 Oct 2026, 12:00')]};
+ if(old)S.cases[S.cases.indexOf(old)]=c;else S.cases.push(c);
+ log('Added CASE-1004: Kunal’s email hack, forwarded by IT Team to HOD');save()}
+window.addEventListener('error',e=>{const c=$('#c');if(c&&!c.innerHTML.trim()&&ME)c.innerHTML='<div class="cd"><div class="cb"><b>Something went wrong while loading this page.</b><p class="hint">Reload the page. If it keeps happening, tell the person who manages the portal this message: '+esc(e.message)+'</p></div></div>'});
+function ready(){pill();chips();$('#sy').textContent=DB?'Shared data is on. Every device sees the same cases, penalties and finance.':'Shared data is off in this view, so changes stay in this browser only.';
  try{const u=S.users.find(x=>x.id===+sessionStorage.getItem('sona_u'));if(u)start(u,1)}catch(e){}}
 function refresh(){if(!ME)return;const u=S.users.find(x=>x.id===ME.id);if(!u){toast('Your account was removed.');logout();return}ME=u;$('#meN').textContent=u.name;$('#meR').textContent=u.role;chips();
  if(!$('#mo').classList.contains('on')&&view!=='employees')go(view);else if(view==='employees')go(view)}
 function sync(db){DB=db;let n=0;const K=Object.keys(DOCS);K.forEach(k=>db.doc('app/'+k).onSnapshot(s=>{const first=!(k in SENT);let ch=false;
- if(s.exists){const o=JSON.stringify(DOCS[k]());APPLY[k](s.data());const w=JSON.stringify(DOCS[k]());ch=o!==w;SENT[k]=w}else if(first)SENT[k]=null;
- if(first&&++n===K.length){READY=true;ready()}else if(READY&&ch)refresh()},e=>{$('#sy').textContent='Lost connection to shared data. Reload the page.';toast('Lost connection to shared data.')}))}
+ if(s.exists){const o=JSON.stringify(DOCS[k]());APPLY[k](JSON.parse(JSON.stringify(s.data())));const w=JSON.stringify(DOCS[k]());ch=o!==w;SENT[k]=w}else if(first)SENT[k]=null;
+ if(first&&++n===K.length){READY=true;ready()}else if(READY){pill();if(ch)refresh()}},e=>{$('#sy').textContent='Lost connection to shared data. Reload the page.';toast('Lost connection to shared data.')}))}
 (async()=>{let db=null;try{if(typeof claude!=='undefined')db=await claude.use('db')}catch(e){}
- if(db)sync(db);else{try{const l=JSON.parse(localStorage.getItem(KEY));if(l&&l.users)S=l}catch(e){}READY=true;ready()}})();
+ if(db)sync(db);else{$('#sy').innerHTML='<b style="color:var(--er)">This device is not connected to shared data.</b> Open this link while signed in to Claude, with Contributor access, so everyone sees the same data. <button class="btn" style="padding:3px 9px;font-size:12px" onclick="offline()">Continue offline</button>'}})();
 </script>
 </body>
 </html>
