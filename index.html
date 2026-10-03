@@ -1,1 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sonainfo | Executive Portal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:wght@500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="login"><div class="lg">
+ <div class="lg-a"><div class="logo" style="padding:0">Sona<b>info</b></div>
+  <div><h1>Every case, every rupee, every decision. In the right hands.</h1><p style="margin-top:12px;max-width:340px">Complaints, enquiries, penalties and finance, with access set person by person.</p></div>
+  <div class="st"><div>1,800<small>Employees</small></div><div>₹6 Cr<small>Total account</small></div><div>8<small>Departments</small></div></div></div>
+ <div class="lg-b"><h2>Sign in</h2><p>Tap an account to fill it in, or type your own.</p>
+  <div class="chips" id="chips"></div>
+  <div class="fg"><label for="em">Email</label><input id="em" type="email" autocomplete="username"></div>
+  <div class="fg"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+  <div class="err" id="le"></div><div class="hint" id="sy" style="margin:-6px 0 10px">Connecting to shared data...</div>
+  <button class="btn p w" onclick="login()">Sign in</button>
+  <p class="hint">Sign in with the email and password created for you. If you have no login yet, ask the SEC Committee.</p></div>
+</div></div>
+
+<div id="app" class="hide">
+ <aside id="sb"><div class="logo">Sona<b>info</b></div><nav id="nav"></nav>
+  <div class="me"><b id="meN"></b><span id="meR"></span><br><button class="btn" style="margin-top:8px;padding:4px 10px" onclick="logout()">Sign out</button></div></aside>
+ <main><header><button class="btn" id="menu" onclick="sb.classList.toggle('open')" aria-label="Menu">☰</button>
+  <input class="srch" placeholder="Search employees..." onkeydown="if(event.key==='Enter'&&can('employees')){E.q=this.value;E.p=0;go('employees')}">
+  <span class="sp"></span><span class="tg" id="pill" title="Shows whether this device is connected to the shared data">...</span><button class="btn" onclick="theme()">◐ Theme</button></header><div id="c"></div></main>
+</div>
+<div id="mo"><div class="md"><header><h3 id="mt"></h3><button class="btn" onclick="cm()" aria-label="Close">✕</button></header><div id="mb"></div><div id="mf"></div></div></div>
+<div id="ts"></div>
+<script src="firebase-config.js"></script>
+<script src="app.js"></script>
+<script type="module" src="sync.js"></script>
+</body>
+</html>
 
