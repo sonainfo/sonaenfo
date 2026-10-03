@@ -1,6 +1,6 @@
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {getFirestore,doc,onSnapshot,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged,createUserWithEmailAndPassword} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getAuth,signInWithEmailAndPassword,signOut,onAuthStateChanged,createUserWithEmailAndPassword,sendPasswordResetEmail} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 const cfg = window.FIREBASE_CONFIG;
 if (cfg && !String(cfg.apiKey).startsWith("PASTE")) {
   const app = initializeApp(cfg), db = getFirestore(app), auth = getAuth(app);
@@ -10,6 +10,7 @@ if (cfg && !String(cfg.apiKey).startsWith("PASTE")) {
     login: (e, p) => signInWithEmailAndPassword(auth, e, p),
     logout: () => signOut(auth),
     who: cb => onAuthStateChanged(auth, u => cb(u ? u.email : null)),
+    reset: e => sendPasswordResetEmail(auth, e),
     create: async (e, p) => { const a2 = getAuth(initializeApp(cfg, "u" + Date.now())); await createUserWithEmailAndPassword(a2, e, p); await signOut(a2); }
   };
 }
