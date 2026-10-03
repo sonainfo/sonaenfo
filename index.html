@@ -3,256 +3,270 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sonainfo | Chairman Portal</title>
+<title>Sonainfo | Executive Portal</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:wght@500;600&display=swap">
 <style>
-:root{--bg:#f1f3f6;--sf:#fff;--tx:#14202f;--mu:#667085;--bd:#e1e5ec;--pr:#0f766e;--br:#b4832a;--ok:#12803f;--wa:#b45309;--er:#c42b2b;--sb:#0d1826;--hv:#f5f7fa;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#09111c;--sf:#111c2b;--tx:#e6ebf2;--mu:#93a1b5;--bd:#223148;--hv:#16243a;--sb:#060c15}}
-:root[data-theme=dark]{--bg:#09111c;--sf:#111c2b;--tx:#e6ebf2;--mu:#93a1b5;--bd:#223148;--hv:#16243a;--sb:#060c15}
+:root{--bg:#eff2f6;--sf:#fff;--tx:#131f2e;--mu:#637085;--bd:#dfe4ec;--pr:#0f766e;--gd:#b8862b;--ok:#12803f;--wa:#b45309;--er:#c42b2b;--sb:#0b1624;--hv:#f3f5f9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#08101b;--sf:#101b2a;--tx:#e6ebf2;--mu:#93a1b5;--bd:#21304a;--hv:#16243a;--sb:#050a12}}
+:root[data-theme=dark]{--bg:#08101b;--sf:#101b2a;--tx:#e6ebf2;--mu:#93a1b5;--bd:#21304a;--hv:#16243a;--sb:#050a12}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{background:var(--bg);color:var(--tx);font:14px/1.5 "IBM Plex Sans",system-ui,sans-serif}
 h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:600}
 button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
 .hide{display:none!important}
-:focus-visible{outline:2px solid var(--br);outline-offset:2px}
-#login{min-height:100%;display:grid;place-items:center;padding:20px;background:var(--sb)}
-.lg{width:100%;max-width:880px;display:grid;grid-template-columns:1fr 1fr;background:var(--sf);border-radius:14px;overflow:hidden}
-.lg-a{background:#0f2a2c;color:#e9f3f1;padding:44px;display:flex;flex-direction:column;justify-content:space-between;gap:30px}
-.lg-a h1{font-size:40px;line-height:1.1}.lg-a p{color:#a9c7c2;max-width:300px}
-.lg-b{padding:44px}.lg-b h2{font-size:26px}.lg-b>p{color:var(--mu);margin:4px 0 18px}
-.fg{margin-bottom:14px}.fg label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
+:focus-visible{outline:2px solid var(--gd);outline-offset:2px}
+#login{min-height:100%;display:grid;place-items:center;padding:20px;background:radial-gradient(900px 500px at 12% 10%,#12413f,transparent),radial-gradient(800px 500px at 92% 92%,#3a2c0e,transparent),var(--sb)}
+.lg{width:100%;max-width:960px;display:grid;grid-template-columns:1.05fr 1fr;background:var(--sf);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)}
+.lg-a{background:linear-gradient(160deg,#0f3a38,#0b1f2e);color:#e9f3f1;padding:40px;display:flex;flex-direction:column;justify-content:space-between;gap:24px}
+.lg-a h1{font-size:36px;line-height:1.12}.lg-a p{color:#a9c7c2}
+.st{display:flex;gap:24px}.st div{font:600 28px Newsreader,serif;color:#e6c26e}.st small{display:block;font:12px "IBM Plex Sans";color:#a9c7c2}
+.lg-b{padding:36px}.lg-b h2{font-size:26px}.lg-b>p{color:var(--mu);margin:4px 0 14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.chip{border:1px solid var(--bd);background:var(--hv);border-radius:99px;padding:3px 11px;font-size:12px}.chip:hover{border-color:var(--gd)}
+.fg{margin-bottom:13px}.fg label{display:block;font-size:12px;font-weight:600;margin-bottom:5px}
 .fg input,.fg select,.fg textarea{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--sf)}
-.fg textarea{min-height:90px;resize:vertical}
+.fg textarea{min-height:80px;resize:vertical}
 .err{color:var(--er);font-size:12px;min-height:18px;margin-bottom:6px}
 .btn{border:1px solid var(--bd);background:var(--sf);padding:8px 14px;border-radius:8px;font-weight:500}
-.btn:hover{background:var(--hv)}
-.btn.p{background:var(--pr);border-color:var(--pr);color:#fff}.btn.p:hover{filter:brightness(1.1)}
-.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff}.btn.no{color:var(--er);border-color:var(--er)}
-.btn.w{width:100%;padding:11px}
-.hint{margin-top:14px;font-size:12px;color:var(--mu)}
+.btn:hover{background:var(--hv)}.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.p{background:var(--pr);border-color:var(--pr);color:#fff}.btn.g{background:var(--gd);border-color:var(--gd);color:#fff}
+.btn.no{color:var(--er);border-color:var(--er)}.btn.w{width:100%;padding:11px}
+.hint{margin-top:12px;font-size:12px;color:var(--mu)}
 #app{display:flex;min-height:100%}
-aside{width:240px;background:var(--sb);color:#b9c4d4;position:fixed;top:0;bottom:0;left:0;padding:calc(18px + env(safe-area-inset-top,0px)) 12px 12px;display:flex;flex-direction:column;z-index:50;transition:transform .2s}
-.logo{font:600 21px Newsreader,serif;color:#fff;padding:0 10px 18px}.logo b{color:var(--br)}
+aside{width:244px;background:var(--sb);color:#b9c4d4;position:fixed;top:0;bottom:0;left:0;padding:calc(18px + env(safe-area-inset-top,0px)) 12px 12px;display:flex;flex-direction:column;z-index:50;transition:transform .2s}
+.logo{font:600 22px Newsreader,serif;color:#fff;padding:0 10px 16px}.logo b{color:var(--gd)}
 nav{flex:1;overflow:auto}
 nav button{display:flex;width:100%;align-items:center;gap:10px;padding:10px 12px;border:0;background:none;color:inherit;border-radius:8px;text-align:left;margin-bottom:2px}
 nav button:hover{background:rgba(255,255,255,.06);color:#fff}
-nav button.on{background:rgba(180,131,42,.18);color:#fff;box-shadow:inset 3px 0 var(--br)}
+nav button.on{background:rgba(184,134,43,.18);color:#fff;box-shadow:inset 3px 0 var(--gd)}
 nav i{font-style:normal;width:20px;text-align:center}
-.cnt{margin-left:auto;background:var(--br);color:#fff;border-radius:99px;font-size:11px;padding:0 7px}
+.cnt{margin-left:auto;background:var(--gd);color:#fff;border-radius:99px;font-size:11px;padding:0 7px}
 .me{border-top:1px solid rgba(255,255,255,.1);padding:12px 8px 0;font-size:12px}.me b{color:#fff;display:block}
-main{margin-left:240px;flex:1;min-width:0}
+main{margin-left:244px;flex:1;min-width:0}
 header{position:sticky;top:0;z-index:20;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;padding:12px 24px;padding-top:calc(12px + env(safe-area-inset-top,0px))}
-header .sp{flex:1}
-#menu{display:none}
-.srch{max-width:320px;width:100%;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg)}
-#c{padding:26px 24px;max-width:1300px}
+header .sp{flex:1}#menu{display:none}
+.srch{max-width:300px;width:100%;padding:8px 12px;border:1px solid var(--bd);border-radius:8px;background:var(--bg)}
+#c{padding:26px 24px;max-width:1320px}
 .ph{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-.ph h1{font-size:28px}.ph p{color:var(--mu)}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
-.g2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:16px}
+.ph h1{font-size:28px}.ph p{color:var(--mu)}.ph>div:last-child{display:flex;gap:8px;flex-wrap:wrap}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.g2{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:16px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .cd{background:var(--sf);border:1px solid var(--bd);border-radius:10px}
-.cd>h3{font-size:17px;padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
-.cb{padding:16px 18px}
-.kp{padding:16px 18px}.kp small{color:var(--mu)}.kp div{font:600 28px Newsreader,serif;margin-top:2px}
-.kp.hl{border-color:var(--br)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--bd)}
+.cd>h3{font-size:17px;padding:14px 18px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.cb{padding:14px 18px}
+.kp{padding:16px 18px}.kp small{color:var(--mu)}.kp div{font:600 28px Newsreader,serif;margin-top:2px}.kp.hl{border-color:var(--gd)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)}
 .row:last-child{border:0}.row small{color:var(--mu);display:block}
-.tg{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--hv);color:var(--mu)}
+.tg{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--hv);color:var(--mu);white-space:nowrap}
 .tg.g{background:rgba(18,128,63,.14);color:var(--ok)}.tg.y{background:rgba(180,83,9,.14);color:var(--wa)}.tg.r{background:rgba(196,43,43,.14);color:var(--er)}
-.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:620px}
-th{text-align:left;font-size:12px;color:var(--mu);font-weight:600;padding:10px 18px;background:var(--hv)}
-td{padding:11px 18px;border-top:1px solid var(--bd)}
-.ac{display:flex;gap:6px}.ac .btn{padding:4px 10px;font-size:12px}
-.ch{display:flex;gap:14px;align-items:flex-end;height:200px;padding-top:10px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font-size:12px;color:var(--mu);font-weight:600;padding:10px 14px;background:var(--hv);white-space:nowrap}
+td{padding:10px 14px;border-top:1px solid var(--bd)}td small{display:block;color:var(--mu)}
+td.c{text-align:center}
+.ac{display:flex;gap:6px;align-items:center;flex-wrap:wrap}.ac .btn{padding:4px 10px;font-size:12px}
+.hb{display:grid;grid-template-columns:130px 1fr 52px;gap:10px;align-items:center;margin-bottom:9px;font-size:13px}.hb b{text-align:right}
+.pb{height:7px;background:var(--hv);border-radius:9px;overflow:hidden}.pb span{display:block;height:100%;background:linear-gradient(90deg,var(--pr),var(--gd))}
+.dc{padding:18px}.dc h3{font-size:18px}.dc>small{color:var(--mu)}.dc .row{padding:6px 0}
+.ch{display:flex;gap:14px;align-items:flex-end;height:170px}
 .ch>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
 .pair{display:flex;gap:3px;align-items:flex-end;width:100%;justify-content:center;flex:1}
-.pair span{width:40%;max-width:22px;border-radius:4px 4px 0 0;min-height:2px}
-.in{background:var(--pr)}.ex{background:var(--br)}
-.lgd{font-size:12px;color:var(--mu);display:flex;gap:14px}.lgd i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px}
-.pb{height:6px;background:var(--hv);border-radius:9px;margin-top:10px;overflow:hidden}.pb span{display:block;height:100%;background:var(--pr)}
-.dc{padding:18px}.dc h3{font-size:18px}.dc p{color:var(--mu);margin:4px 0 8px;font-size:13px}
-#mo{position:fixed;inset:0;background:rgba(5,10,20,.6);display:none;place-items:center;padding:16px;z-index:100}
-#mo.on{display:grid}
-.md{background:var(--sf);border-radius:12px;width:100%;max-width:480px;max-height:90vh;overflow:auto}
-.md header{position:static;padding:14px 20px;border-radius:12px 12px 0 0}.md header h3{font-size:18px;flex:1}
-#mb{padding:18px 20px}#mf{padding:12px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}
+.pair span{width:40%;max-width:22px;border-radius:4px 4px 0 0;min-height:2px;background:var(--pr)}.pair span+span{background:var(--gd)}
+.tl{border-left:2px solid var(--bd);margin:8px 0 0 6px;padding-left:14px}.tl div{margin-bottom:10px;position:relative}
+.tl div:before{content:"";position:absolute;left:-20px;top:6px;width:8px;height:8px;border-radius:50%;background:var(--gd)}
+.tl small{color:var(--mu);display:block}
+#mo{position:fixed;inset:0;background:rgba(5,10,20,.6);display:none;place-items:center;padding:16px;z-index:100}#mo.on{display:grid}
+.md{background:var(--sf);border-radius:12px;width:100%;max-width:520px;max-height:90vh;overflow:auto}
+.md header{position:static;padding:14px 20px;border-radius:12px 12px 0 0}.md header h3{flex:1}
+#mb{padding:18px 20px}#mf{padding:12px 20px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 #ts{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));display:grid;gap:8px;z-index:200}
-.t{background:var(--sb);color:#fff;padding:11px 16px;border-radius:8px;border-left:4px solid var(--br);box-shadow:0 8px 24px rgba(0,0,0,.25)}
-.empty{color:var(--mu);padding:26px;text-align:center}
+.t{background:var(--sb);color:#fff;padding:11px 16px;border-radius:8px;border-left:4px solid var(--gd)}
+.empty{color:var(--mu);padding:24px;text-align:center}
 @media(max-width:1000px){.g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}.g3{grid-template-columns:1fr 1fr}}
-@media(max-width:760px){aside{transform:translateX(-100%)}aside.open{transform:none}main{margin-left:0}#menu{display:block}.lg{grid-template-columns:1fr}.lg-a{display:none}.lg-b{padding:30px 22px}.g3{grid-template-columns:1fr}#c{padding:18px 14px}header{padding-left:14px;padding-right:14px}.srch{display:none}header .sp{display:block}}
+@media(max-width:760px){aside{transform:translateX(-100%)}aside.open{transform:none}main{margin-left:0}#menu{display:block}.lg{grid-template-columns:1fr}.lg-a{display:none}.lg-b{padding:26px 20px}.g3{grid-template-columns:1fr}#c{padding:18px 14px}header{padding-left:14px;padding-right:14px}.srch{display:none}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-<div id="login">
- <div class="lg">
-  <div class="lg-a"><div class="logo" style="padding:0">Sona<b>info</b></div><div><h1>Chairman's office, in one place.</h1><p style="margin-top:12px">Approvals, finance, members, committees and meetings, all under your review.</p></div><small>Authorised access only</small></div>
-  <div class="lg-b">
-   <h2>Sign in</h2><p>Chairman Portal</p>
-   <div class="fg"><label for="em">Email</label><input id="em" type="email" placeholder="chairman@sonainfo.com" autocomplete="username"></div>
-   <div class="fg"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password"></div>
-   <div class="err" id="le"></div>
-   <button class="btn p w" onclick="login()">Sign in</button>
-   <p class="hint">Demo login: chairman@sonainfo.com / admin<br>Data is saved only in this browser.</p>
-  </div>
- </div>
-</div>
+<div id="login"><div class="lg">
+ <div class="lg-a"><div class="logo" style="padding:0">Sona<b>info</b></div>
+  <div><h1>Every case, every rupee, every decision. In the right hands.</h1><p style="margin-top:12px;max-width:340px">Complaints, enquiries, penalties and finance, with access set person by person.</p></div>
+  <div class="st"><div>1,800<small>Employees</small></div><div>₹6 Cr<small>Total account</small></div><div>8<small>Departments</small></div></div></div>
+ <div class="lg-b"><h2>Sign in</h2><p>Tap an account to fill it in, or type your own.</p>
+  <div class="chips" id="chips"></div>
+  <div class="fg"><label for="em">Email</label><input id="em" type="email" autocomplete="username"></div>
+  <div class="fg"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+  <div class="err" id="le"></div>
+  <button class="btn p w" onclick="login()">Sign in</button>
+  <p class="hint">Chairman: chairman@sonainfo.com / admin<br>SEC: sec@sonainfo.com / admins · HOD: hod@sonainfo.com / adminh<br>Disciplinary: dc@sonainfo.com / admind · Finance: financial@sonainfo.com / adminf<br>Data stays in this browser only.</p></div>
+</div></div>
 
 <div id="app" class="hide">
  <aside id="sb"><div class="logo">Sona<b>info</b></div><nav id="nav"></nav>
-  <div class="me"><b>Chairman</b>chairman@sonainfo.com<br><button class="btn" style="margin-top:8px;padding:4px 10px" onclick="logout()">Sign out</button></div></aside>
- <main>
-  <header><button class="btn" id="menu" onclick="sb.classList.toggle('open')" aria-label="Menu">☰</button>
-   <input class="srch" id="q" placeholder="Search members, announcements..." oninput="gs(this.value)">
-   <span class="sp"></span><button class="btn" onclick="theme()" aria-label="Toggle theme">◐ Theme</button></header>
-  <div id="c"></div>
- </main>
+  <div class="me"><b id="meN"></b><span id="meR"></span><br><button class="btn" style="margin-top:8px;padding:4px 10px" onclick="logout()">Sign out</button></div></aside>
+ <main><header><button class="btn" id="menu" onclick="sb.classList.toggle('open')" aria-label="Menu">☰</button>
+  <input class="srch" placeholder="Search employees..." onkeydown="if(event.key==='Enter'&&can('employees')){E.q=this.value;E.p=0;go('employees')}">
+  <span class="sp"></span><button class="btn" onclick="theme()">◐ Theme</button></header><div id="c"></div></main>
 </div>
-
 <div id="mo"><div class="md"><header><h3 id="mt"></h3><button class="btn" onclick="cm()" aria-label="Close">✕</button></header><div id="mb"></div><div id="mf"></div></div></div>
 <div id="ts"></div>
 
 <script>
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt=n=>'₹'+Number(n).toLocaleString('en-IN');
-const KEY='sonainfo_chairman_v2';
-const SEED=()=>({
- members:[
-  {id:1,name:'Rahul Kumar',role:'Chairman',dept:'Executive',email:'rahul@sonainfo.com',st:'Active'},
-  {id:2,name:'Shivani Sharma',role:'Executive Assistant',dept:'Executive',email:'shivani@sonainfo.com',st:'Active'},
-  {id:3,name:'Manas Verma',role:'Team Manager',dept:'Operations',email:'manas@sonainfo.com',st:'Active'},
-  {id:4,name:'Ankit Singh',role:'Disciplinary Manager',dept:'Disciplinary',email:'ankit@sonainfo.com',st:'Pending'},
-  {id:5,name:'Priyanka Rao',role:'Salary Team Lead',dept:'Finance',email:'priyanka@sonainfo.com',st:'Active'},
-  {id:6,name:'Pankaj Kumar',role:'Operations Manager',dept:'Operations',email:'pankaj@sonainfo.com',st:'Active'}],
- ann:[
-  {id:1,title:'Portal updated',text:'New approvals and audit features are live.',cat:'System',date:'2026-10-02'},
-  {id:2,title:'Department review meeting',text:'Monthly review is scheduled for 5 October.',cat:'Meeting',date:'2026-10-01'},
-  {id:3,title:'New administrative guidelines',text:'Updated guidelines have been published.',cat:'Policy',date:'2026-09-28'}],
- appr:[
-  {id:1,title:'Software licence renewal',by:'Pankaj Kumar',type:'Expense',amt:24000,st:'Pending'},
-  {id:2,title:'Hire two operations executives',by:'Manas Verma',type:'Hiring',amt:0,st:'Pending'},
-  {id:3,title:'Salary advance policy change',by:'Priyanka Rao',type:'Policy',amt:0,st:'Pending'},
-  {id:4,title:'Disciplinary case #12 closure',by:'Ankit Singh',type:'Disciplinary',amt:0,st:'Pending'}],
- tx:[
-  {id:1,d:'2026-05-12',n:'Member contribution',t:'Income',a:210000},{id:2,d:'2026-05-20',n:'Operations',t:'Expense',a:96000},
-  {id:3,d:'2026-06-10',n:'Member contribution',t:'Income',a:225000},{id:4,d:'2026-06-22',n:'Salaries',t:'Expense',a:140000},
-  {id:5,d:'2026-07-09',n:'Operational recovery',t:'Income',a:180000},{id:6,d:'2026-07-25',n:'Software & services',t:'Expense',a:62000},
-  {id:7,d:'2026-08-11',n:'Member contribution',t:'Income',a:240000},{id:8,d:'2026-08-27',n:'Salaries',t:'Expense',a:150000},
-  {id:9,d:'2026-09-14',n:'Member contribution',t:'Income',a:252000},{id:10,d:'2026-09-30',n:'Department allocation',t:'Expense',a:118500},
-  {id:11,d:'2026-10-02',n:'Company operations',t:'Expense',a:35000}],
- meet:[
-  {id:1,title:'Department review',d:'2026-10-05',tm:'10:00',who:'All heads'},
-  {id:2,title:'Finance review',d:'2026-10-12',tm:'14:00',who:'Financial Committee'},
-  {id:3,title:'SEC committee',d:'2026-10-18',tm:'11:30',who:'SEC Committee'}],
- comm:[
-  {n:'Executive Committee',h:'Chairman',c:8,s:'Active'},{n:'Financial Committee',h:'Finance Head',c:6,s:'Active'},
-  {n:'SEC Committee',h:'SEC Head',c:10,s:'Active'},{n:'Disciplinary Committee',h:'Disciplinary Manager',c:6,s:'Active'},
-  {n:'Operations Committee',h:'Operations Manager',c:9,s:'Review'},{n:'Salary Committee',h:'Salary Team Lead',c:5,s:'Active'}],
- log:[{t:'02 Oct 2026, 18:10',a:'Portal set up'}]
-});
-const DEPTS=[['Executive','Chairman’s office and strategy'],['Operations','Daily execution and delivery'],['Finance','Budget, records and reporting'],['Disciplinary','Internal review and conduct'],['Parliament','Deliberation and coordination'],['SEC Committee','Security and oversight']];
+const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN'),cr=n=>'₹'+(n/1e7).toFixed(2)+' Cr';
+const now=()=>new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+const today=()=>new Date().toISOString().slice(0,10);
+const dd=d=>new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const KEY='sonainfo_v4';
+const VW=[['dashboard','Dashboard','⌂'],['cases','Cases','⚖'],['penalties','Penalty list','⚠'],['finance','Finance','₹'],['employees','Employees','♙'],['departments','Departments','▦'],['announcements','Announcements','◉'],['audit','Audit log','☰'],['access','Access control','🔑']];
+const AC=[['complaint','Register complaint'],['enquiry','Do enquiry'],['review','Review & take action'],['forward','Forward case'],['announce','Announce'],['penedit','Manage penalties'],['finedit','Edit finance']];
+const D=[['SEC Committee','Satrunjay',60,4000000,2650000],['Disciplinary Committee','Ashish',45,2500000,1400000],['Financial Team','Neha Gupta',120,8000000,5100000],['Script','Shivani',420,12000000,7900000],['CEO Office','CEO',25,5000000,3200000],['HOD','Akaya',80,6000000,3800000],['Client Department','Client Dept Head',380,11000000,6700000],['IT','Shivani',670,11500000,7300000]];
+const DN=D.map(d=>d[0]);
+const OFF=['Disciplinary Committee','HOD','SEC Committee','Chairman'];
+const ST=['Registered','Under Enquiry','Under Review','Action Taken','Decision announced'];
+const PT=['Warning','Fine','Suspension','Termination'];
+const mk=s=>Object.fromEntries(s.split(' ').map(k=>[k,1]));
+const H=(by,a,n)=>({t:'02 Oct 2026, 10:00',by,a,n});
+const SEED=()=>({total:60000000,bud:{},
+ users:[
+ {id:1,name:'Satrunjay',email:'chairman@sonainfo.com',pw:'admin',role:'Chairman',office:'Chairman',perm:mk('dashboard cases penalties finance employees departments announcements audit access announce')},
+ {id:2,name:'SEC Committee',email:'sec@sonainfo.com',pw:'admins',role:'SEC Committee',office:'SEC Committee',perm:mk('dashboard cases penalties finance employees departments announcements audit complaint forward announce')},
+ {id:3,name:'Akaya',email:'hod@sonainfo.com',pw:'adminh',role:'HOD',office:'HOD',perm:mk('dashboard cases penalties employees departments announcements review forward announce')},
+ {id:4,name:'Ashish',email:'dc@sonainfo.com',pw:'admind',role:'Disciplinary Committee',office:'Disciplinary Committee',perm:mk('dashboard cases penalties employees departments announcements complaint enquiry forward')},
+ {id:5,name:'Financial Team',email:'financial@sonainfo.com',pw:'adminf',role:'Financial Team',office:'Financial Team',perm:mk('dashboard finance penalties employees departments finedit')}],
+ cases:[
+ {id:'CASE-1001',title:'Repeated late attendance',against:'EMP0412',dept:'Script',sev:'Medium',desc:'Late by more than 30 minutes on 9 days in September.',st:'Under Enquiry',holder:'Disciplinary Committee',h:[H('Ashish (Disciplinary Committee)','Complaint registered','Attendance report attached.'),H('Ashish (Disciplinary Committee)','Enquiry started','Employee called for statement.')]},
+ {id:'CASE-1002',title:'Data policy violation',against:'EMP1530',dept:'IT',sev:'High',desc:'Customer data shared on a personal email account.',st:'Under Review',holder:'HOD',h:[H('SEC Committee (SEC Committee)','Complaint registered','Flagged by security audit.'),H('SEC Committee (SEC Committee)','Forwarded to HOD','Please review and act.')]},
+ {id:'CASE-1003',title:'Misconduct with a client',against:'EMP1185',dept:'Client Department',sev:'High',desc:'Client reported rude behaviour on a call.',st:'Registered',holder:'SEC Committee',h:[H('Ashish (Disciplinary Committee)','Complaint registered','Client email received.')]}],
+ pen:[{id:1,caseId:'CASE-0998',emp:'EMP0210',type:'Fine',amt:5000,date:'2026-09-25',by:'Disciplinary Committee',st:'Imposed'},{id:2,caseId:'CASE-0990',emp:'EMP0877',type:'Warning',amt:0,date:'2026-09-12',by:'HOD',st:'Imposed'},{id:3,caseId:'CASE-0985',emp:'EMP0331',type:'Fine',amt:10000,date:'2026-09-02',by:'SEC Committee',st:'Collected'}],
+ tx:[{id:1,d:'2026-05-14',n:'Client retainer',dept:'Client Department',t:'Income',a:5200000,seed:1},{id:2,d:'2026-06-20',n:'Salaries',dept:'Financial Team',t:'Expense',a:6100000,seed:1},{id:3,d:'2026-07-15',n:'Client retainer',dept:'Client Department',t:'Income',a:4800000,seed:1},{id:4,d:'2026-08-22',n:'Salaries',dept:'Financial Team',t:'Expense',a:6400000,seed:1},{id:5,d:'2026-09-18',n:'Client retainer',dept:'Client Department',t:'Income',a:5600000,seed:1},{id:6,d:'2026-10-02',n:'Cloud and hosting',dept:'IT',t:'Expense',a:410000,seed:1}],
+ ann:[{id:1,title:'Portal access rights updated',text:'Each office now has role-based access to cases, penalties and finance.',date:'2026-10-02',by:'Satrunjay'}],
+ log:[{t:'02 Oct 2026, 18:10',a:'Portal set up',u:'System'}]});
 let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!S.members)S=SEED();
+if(!S||!S.users)S=SEED();
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
-const log=a=>{S.log.unshift({t:new Date().toLocaleString('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}),a});S.log=S.log.slice(0,60);save()};
+let ME=null,view='dashboard';
+const can=k=>!!(ME&&ME.perm[k]);
+const log=a=>{S.log.unshift({t:now(),a,u:ME?ME.name:'System'});S.log=S.log.slice(0,100);save()};
 const nid=l=>Math.max(0,...l.map(x=>x.id))+1;
-let view='dashboard';
-try{if(sessionStorage.getItem('sona_in')==='1')setTimeout(enter,0)}catch(e){}
 
-function login(){
- if($('#em').value.trim().toLowerCase()==='chairman@sonainfo.com'&&$('#pw').value==='admin'){try{sessionStorage.setItem('sona_in','1')}catch(e){}enter();log('Chairman signed in')}
- else $('#le').textContent='Email or password is incorrect. Check the demo login below.'}
-document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!$('#login').classList.contains('hide')&&!$('#app').offsetParent)login();if(e.key==='Escape')cm()});
-function enter(){$('#login').classList.add('hide');$('#app').classList.remove('hide');go(view)}
-function logout(){try{sessionStorage.removeItem('sona_in')}catch(e){}$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#pw').value=''}
+const EMP=(()=>{let s=7;const r=()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+ const F='Aarav Vivaan Aditya Rohan Ishaan Kabir Arjun Neha Priya Anjali Pooja Kavya Riya Sneha Meera Ritu Karan Vikram Sanjay Deepak Nisha Tanvi Harsh Yash'.split(' '),L='Sharma Verma Singh Gupta Kumar Yadav Mishra Patel Reddy Nair Joshi Mehta Das Khan Rao Iyer'.split(' '),R=['Executive','Analyst','Associate','Senior Associate','Team Lead','Coordinator'];
+ const o=[];let n=1;D.forEach(d=>{for(let i=0;i<d[2];i++){o.push({id:'EMP'+String(n).padStart(4,'0'),name:F[r()*F.length|0]+' '+L[r()*L.length|0],dept:d[0],role:R[r()*R.length|0]});n++}});return o})();
+const who=id=>{const e=EMP.find(x=>x.id===id);return e?`${e.name} (${e.id})`:id};
+
+/* auth */
+const chips=()=>$('#chips').innerHTML=S.users.map(u=>`<button class="chip" onclick="fill('${esc(u.email)}')">${esc(u.role)}</button>`).join('');chips();
+function fill(e){const u=S.users.find(x=>x.email===e);$('#em').value=u.email;$('#pw').value=u.pw}
+function login(){const u=S.users.find(x=>x.email.toLowerCase()===$('#em').value.trim().toLowerCase()&&x.pw===$('#pw').value);
+ if(!u){$('#le').textContent='Email or password is incorrect. Tap an account above to fill it in.';return}
+ try{sessionStorage.setItem('sona_u',u.id)}catch(e){}start(u)}
+function start(u){ME=u;$('#le').textContent='';$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#meN').textContent=u.name;$('#meR').textContent=u.role;log('Signed in');go('dashboard')}
+function logout(){try{sessionStorage.removeItem('sona_u')}catch(e){}ME=null;$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#pw').value=''}
+try{const u=S.users.find(x=>x.id===+sessionStorage.getItem('sona_u'));if(u)start(u)}catch(e){}
 function theme(){const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'}
 
-const NAV=[['dashboard','⌂','Dashboard'],['approvals','✔','Approvals'],['members','♙','Members'],['departments','▦','Departments'],['committees','♜','Committees'],['finance','₹','Finance'],['meetings','▣','Meetings'],['announcements','◉','Announcements'],['audit','☰','Audit log'],['settings','⚙','Settings']];
-const pend=()=>S.appr.filter(a=>a.st==='Pending');
-function go(v){view=v;sb.classList.remove('open');
- $('#nav').innerHTML=NAV.map(n=>`<button class="${n[0]===v?'on':''}" onclick="go('${n[0]}')"><i>${n[1]}</i>${n[2]}${n[0]==='approvals'&&pend().length?`<span class="cnt">${pend().length}</span>`:''}</button>`).join('');
+const mine=()=>S.cases.filter(c=>c.holder===ME.office);
+function go(v){if(!can(v))v=(VW.find(m=>can(m[0]))||['dashboard'])[0];view=v;sb.classList.remove('open');
+ $('#nav').innerHTML=VW.filter(m=>can(m[0])).map(m=>`<button class="${m[0]===v?'on':''}" onclick="go('${m[0]}')"><i>${m[2]}</i>${m[1]}${m[0]==='cases'&&mine().length?`<span class="cnt">${mine().length}</span>`:''}</button>`).join('');
  $('#c').innerHTML=V[v]();scrollTo(0,0)}
 const ph=(t,p,b='')=>`<div class="ph"><div><h1>${t}</h1><p>${p}</p></div><div>${b}</div></div>`;
-const tot=t=>S.tx.filter(x=>x.t===t).reduce((s,x)=>s+x.a,0);
-const bal=()=>tot('Income')-tot('Expense');
-const tag=s=>`<span class="tg ${{Active:'g',Approved:'g',Published:'g',Pending:'y',Review:'y',Rejected:'r',Income:'g',Expense:'y'}[s]||''}">${esc(s)}</span>`;
-const dd=d=>new Date(d+'T00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-const today=()=>new Date().toISOString().slice(0,10);
+const tag=s=>`<span class="tg ${{Registered:'y','Under Enquiry':'y','Under Review':'y','Action Taken':'','Decision announced':'g',High:'r',Medium:'y',Low:'g',Imposed:'y',Collected:'g',Income:'g',Expense:'y'}[s]||''}">${esc(s)}</span>`;
+const bud=d=>S.bud[d]??D.find(x=>x[0]===d)[3];
+const spent=d=>D.find(x=>x[0]===d)[4]+S.tx.filter(x=>!x.seed&&x.dept===d&&x.t==='Expense').reduce((s,x)=>s+x.a,0);
+const income=()=>S.tx.filter(x=>!x.seed&&x.t==='Income').reduce((s,x)=>s+x.a,0);
+const spentAll=()=>DN.reduce((s,d)=>s+spent(d),0);
+const balance=()=>S.total-spentAll()+income();
+const bars=(rows)=>rows.map(r=>`<div class="hb"><span>${esc(r[0])}</span><div class="pb"><span style="width:${Math.min(100,r[1])}%"></span></div><b>${r[2]}</b></div>`).join('');
+function chart(){const o=[],n=new Date();for(let i=5;i>=0;i--){const d=new Date(n.getFullYear(),n.getMonth()-i,1),k=d.toISOString().slice(0,7),f=t=>S.tx.filter(x=>x.t===t&&x.d.startsWith(k)).reduce((s,x)=>s+x.a,0);o.push([d.toLocaleString('en',{month:'short'}),f('Income'),f('Expense')])}
+ const m=Math.max(1,...o.map(x=>Math.max(x[1],x[2])));return `<div class="ch">${o.map(x=>`<div><div class="pair"><span style="height:${x[1]/m*100}%" title="Income ${inr(x[1])}"></span><span style="height:${x[2]/m*100}%" title="Expense ${inr(x[2])}"></span></div><small>${x[0]}</small></div>`).join('')}</div><p class="hint">Green is income, gold is expense.</p>`}
 
-function apprRow(a,full){return `<div class="row"><div><b>${esc(a.title)}</b><small>${esc(a.type)} · requested by ${esc(a.by)}${a.amt?' · '+fmt(a.amt):''}</small></div>
- ${a.st==='Pending'?`<div class="ac"><button class="btn ok" onclick="decide(${a.id},true)">Approve</button><button class="btn no" onclick="decide(${a.id},false)">Reject</button></div>`:tag(a.st)}</div>`}
-function months(){const out=[],n=new Date();for(let i=5;i>=0;i--){const d=new Date(n.getFullYear(),n.getMonth()-i,1),k=d.toISOString().slice(0,7);
- out.push({l:d.toLocaleString('en',{month:'short'}),i:S.tx.filter(x=>x.t==='Income'&&x.d.startsWith(k)).reduce((s,x)=>s+x.a,0),e:S.tx.filter(x=>x.t==='Expense'&&x.d.startsWith(k)).reduce((s,x)=>s+x.a,0)})}return out}
-function chart(){const m=months(),mx=Math.max(1,...m.map(x=>Math.max(x.i,x.e)));
- return `<div class="ch">${m.map(x=>`<div><div class="pair"><span class="in" style="height:${x.i/mx*100}%" title="Income ${fmt(x.i)}"></span><span class="ex" style="height:${x.e/mx*100}%" title="Expense ${fmt(x.e)}"></span></div><small>${x.l}</small></div>`).join('')}</div>
- <div class="lgd" style="margin-top:10px"><span><i class="in"></i>Income</span><span><i class="ex"></i>Expense</span></div>`}
+const E={q:'',d:'All',p:0,n:20};
+function empBody(){const q=E.q.toLowerCase(),l=EMP.filter(e=>(E.d==='All'||e.dept===E.d)&&(e.name+e.id+e.role).toLowerCase().includes(q)),m=Math.max(0,Math.ceil(l.length/E.n)-1);E.p=Math.min(E.p,m);
+ $('#eb').innerHTML=l.slice(E.p*E.n,E.p*E.n+E.n).map(e=>`<tr><td>${e.id}</td><td><b>${esc(e.name)}</b></td><td>${esc(e.role)}</td><td>${esc(e.dept)}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">No employees match. Clear the search or pick another department.</td></tr>';
+ $('#ep').innerHTML=`<span>${l.length.toLocaleString('en-IN')} employees · page ${E.p+1} of ${m+1}</span><span class="ac"><button class="btn" onclick="E.p--;empBody()" ${E.p<1?'disabled':''}>Previous</button><button class="btn" onclick="E.p++;empBody()" ${E.p>=m?'disabled':''}>Next</button></span>`}
+const CF={s:'All',m:0};
+function caseBody(){const l=S.cases.filter(c=>(CF.s==='All'||c.st===CF.s)&&(!CF.m||c.holder===ME.office));
+ $('#cb').innerHTML=l.map(c=>`<tr><td><b>${c.id}</b></td><td>${esc(c.title)}<small>${esc(c.dept)} · ${esc(who(c.against))}</small></td><td>${esc(c.holder)}</td><td>${tag(c.st)}</td><td>${tag(c.sev)}</td><td><button class="btn" style="padding:4px 10px;font-size:12px" onclick="showCase('${c.id}')">Open</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No cases here. Change the filter or register a complaint.</td></tr>'}
 
 const V={
-dashboard(){const up=S.meet.filter(m=>m.d>=today()).sort((a,b)=>a.d.localeCompare(b.d));
- return ph('Good day, Chairman','Everything that needs your attention at Sonainfo.',`<button class="btn p" onclick="annForm()">+ Announcement</button>`)+
- `<div class="g4"><div class="cd kp hl"><small>Awaiting your decision</small><div>${pend().length}</div></div>
- <div class="cd kp"><small>Active members</small><div>${S.members.filter(m=>m.st==='Active').length}</div></div>
- <div class="cd kp"><small>Available balance</small><div>${fmt(bal())}</div></div>
- <div class="cd kp"><small>Upcoming meetings</small><div>${up.length}</div></div></div>
- <div class="g2"><div class="cd"><h3>Decisions awaiting you<button class="btn" onclick="go('approvals')">All approvals</button></h3><div class="cb">${pend().slice(0,4).map(a=>apprRow(a)).join('')||'<div class="empty">Nothing pending. You are all caught up.</div>'}</div></div>
- <div class="cd"><h3>Income vs expense</h3><div class="cb">${chart()}</div></div></div>
- <div class="g2"><div class="cd"><h3>Next meetings</h3><div class="cb">${up.slice(0,4).map(m=>`<div class="row"><div><b>${esc(m.title)}</b><small>${esc(m.who)}</small></div><span>${dd(m.d)}, ${esc(m.tm)}</span></div>`).join('')||'<div class="empty">No upcoming meetings.</div>'}</div></div>
- <div class="cd"><h3>Recent activity</h3><div class="cb">${S.log.slice(0,5).map(l=>`<div class="row"><div>${esc(l.a)}<small>${esc(l.t)}</small></div></div>`).join('')}</div></div></div>`},
-approvals(){return ph('Approvals','Requests from departments that need the chairman’s sign-off.')+
- `<div class="cd"><h3>Pending (${pend().length})</h3><div class="cb">${pend().map(a=>apprRow(a)).join('')||'<div class="empty">No pending requests.</div>'}</div></div>
- <div class="cd" style="margin-top:16px"><h3>Decided</h3><div class="cb">${S.appr.filter(a=>a.st!=='Pending').map(a=>apprRow(a)).join('')||'<div class="empty">No decisions yet.</div>'}</div></div>`},
-members(){return ph('Members','Add, edit and review everyone in the organisation.',`<button class="btn p" onclick="memForm()">+ Add member</button>`)+
- `<div class="cd"><h3>Directory <input class="srch" style="max-width:240px" placeholder="Filter members" oninput="$('#mt2').innerHTML=memRows(this.value)"></h3><div class="tw"><table><thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Status</th><th></th></tr></thead><tbody id="mt2">${memRows('')}</tbody></table></div></div>`},
-departments(){return ph('Departments','Headcount by department.')+`<div class="g3">${DEPTS.map(d=>{const n=S.members.filter(m=>m.dept===d[0]).length;return `<div class="cd dc"><h3>${d[0]}</h3><p>${d[1]}</p><b>${n}</b> member${n===1?'':'s'}<div class="pb"><span style="width:${Math.min(100,n*20)}%"></span></div></div>`}).join('')}</div>`},
-committees(){return ph('Committees','Heads and strength of each committee.')+`<div class="g3">${S.comm.map(c=>`<div class="cd dc"><div style="display:flex;justify-content:space-between"><h3>${esc(c.n)}</h3>${tag(c.s)}</div><p>Head: ${esc(c.h)}</p><b>${c.c}</b> members</div>`).join('')}</div>`},
-finance(){const b=450000,ex=tot('Expense');return ph('Finance','Income, expenses and the available balance.',`<button class="btn p" onclick="txForm()">+ Add transaction</button>`)+
- `<div class="g4"><div class="cd kp"><small>Budget FY 2026–27</small><div>${fmt(b)}</div></div><div class="cd kp"><small>Total income</small><div>${fmt(tot('Income'))}</div></div><div class="cd kp"><small>Total expenses</small><div>${fmt(ex)}</div></div><div class="cd kp hl"><small>Available balance</small><div>${fmt(bal())}</div></div></div>
- <div class="g2"><div class="cd"><h3>Last six months</h3><div class="cb">${chart()}</div></div><div class="cd"><h3>Budget used</h3><div class="cb"><div style="font:600 32px Newsreader,serif">${Math.round(ex/b*100)}%</div><div class="pb"><span style="width:${Math.min(100,ex/b*100)}%"></span></div><p class="hint">${fmt(ex)} of ${fmt(b)} spent.</p></div></div></div>
- <div class="cd"><h3>Transactions</h3><div class="tw"><table><thead><tr><th>Description</th><th>Amount</th><th>Type</th><th>Date</th><th></th></tr></thead><tbody>${[...S.tx].sort((a,b)=>b.d.localeCompare(a.d)).map(t=>`<tr><td>${esc(t.n)}</td><td>${fmt(t.a)}</td><td>${tag(t.t)}</td><td>${dd(t.d)}</td><td><button class="btn no" style="padding:3px 9px" onclick="del('tx',${t.id},'transaction')">Delete</button></td></tr>`).join('')}</tbody></table></div></div>`},
-meetings(){return ph('Meetings','Schedule and track meetings.',`<button class="btn p" onclick="meetForm()">+ Schedule meeting</button>`)+
- `<div class="cd"><div class="cb">${[...S.meet].sort((a,b)=>a.d.localeCompare(b.d)).map(m=>`<div class="row"><div><b>${esc(m.title)}</b><small>${esc(m.who)}</small></div><div class="ac"><span>${dd(m.d)}, ${esc(m.tm)}</span>${m.d<today()?tag('Done'):''}<button class="btn no" onclick="del('meet',${m.id},'meeting')">Delete</button></div></div>`).join('')||'<div class="empty">No meetings scheduled yet.</div>'}</div></div>`},
-announcements(){return ph('Announcements','Publish notices to the whole organisation.',`<button class="btn p" onclick="annForm()">+ New announcement</button>`)+
- `<div class="cd"><div class="cb" id="al">${annRows(S.ann)}</div></div>`},
-audit(){return ph('Audit log','Every decision and change made in this portal.')+`<div class="cd"><div class="cb">${S.log.map(l=>`<div class="row"><div>${esc(l.a)}</div><small>${esc(l.t)}</small></div>`).join('')}</div></div>`},
-settings(){return ph('Settings','Portal preferences.')+`<div class="cd"><div class="cb"><div class="row"><div><b>Theme</b><small>Switch between light and dark.</small></div><button class="btn" onclick="theme()">Toggle</button></div>
- <div class="row"><div><b>Reset demo data</b><small>Restore the original sample members, finance and requests.</small></div><button class="btn no" onclick="ask('Reset all data to the original sample data?',()=>{S=SEED();save();go('dashboard');toast('Data reset')})">Reset</button></div></div></div>`}};
+dashboard(){const open=S.cases.filter(c=>c.st!=='Decision announced').length;
+ return ph(`Welcome, ${esc(ME.name)}`,esc(ME.role))+
+ `<div class="g4">${can('cases')?`<div class="cd kp hl"><small>Open cases</small><div>${open}</div></div><div class="cd kp"><small>With your office</small><div>${mine().length}</div></div>`:''}
+ ${can('finance')?`<div class="cd kp"><small>Total account</small><div>${cr(S.total)}</div></div><div class="cd kp"><small>Balance available</small><div>${cr(balance())}</div></div>`:''}
+ <div class="cd kp"><small>Employees</small><div>${EMP.length.toLocaleString('en-IN')}</div></div></div>
+ <div class="g2">${can('cases')?`<div class="cd"><h3>Cases by stage</h3><div class="cb">${bars(ST.map(s=>{const n=S.cases.filter(c=>c.st===s).length;return[s,n/Math.max(1,S.cases.length)*100,n]}))}</div></div>`:''}
+ ${can('finance')?`<div class="cd"><h3>Department budget used</h3><div class="cb">${bars(DN.map(d=>{const p=Math.round(spent(d)/bud(d)*100);return[d,p,p+'%']}))}</div></div>`:''}
+ <div class="cd"><h3>Recent activity</h3><div class="cb">${S.log.slice(0,6).map(l=>`<div class="row"><div>${esc(l.a)}<small>${esc(l.u)} · ${esc(l.t)}</small></div></div>`).join('')}</div></div></div>`},
+cases(){setTimeout(caseBody,0);return ph('Cases','Complaints from registration to final decision.',can('complaint')?`<button class="btn p" onclick="complaintForm()">+ Register complaint</button>`:'')+
+ `<div class="cd"><h3><span>All cases</span><span class="ac"><select class="srch" style="max-width:190px" onchange="CF.s=this.value;caseBody()">${['All',...ST].map(s=>`<option>${s}</option>`).join('')}</select><label class="ac"><input type="checkbox" onchange="CF.m=this.checked?1:0;caseBody()"> With my office</label></span></h3><div class="tw"><table><thead><tr><th>Case</th><th>Complaint</th><th>With</th><th>Stage</th><th>Severity</th><th></th></tr></thead><tbody id="cb"></tbody></table></div></div>`},
+penalties(){return ph('Penalty list','Every penalty imposed, and whether fines have been collected.',can('penedit')?`<button class="btn p" onclick="penForm()">+ Add penalty</button>`:'')+
+ `<div class="g4"><div class="cd kp"><small>Total penalties</small><div>${S.pen.length}</div></div><div class="cd kp hl"><small>Fines pending</small><div>${inr(S.pen.filter(p=>p.type==='Fine'&&p.st==='Imposed').reduce((s,p)=>s+p.amt,0))}</div></div><div class="cd kp"><small>Fines collected</small><div>${inr(S.pen.filter(p=>p.st==='Collected').reduce((s,p)=>s+p.amt,0))}</div></div></div>
+ <div class="cd"><div class="tw"><table><thead><tr><th>Employee</th><th>Penalty</th><th>Amount</th><th>Case</th><th>Imposed by</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>${[...S.pen].reverse().map(p=>`<tr><td><b>${esc(who(p.emp))}</b></td><td>${esc(p.type)}</td><td>${p.amt?inr(p.amt):'-'}</td><td>${esc(p.caseId)}</td><td>${esc(p.by)}</td><td>${dd(p.date)}</td><td>${tag(p.st)}</td><td>${can('finedit')&&p.type==='Fine'&&p.st==='Imposed'?`<button class="btn g" style="padding:4px 10px;font-size:12px" onclick="collect(${p.id})">Mark collected</button>`:''}</td></tr>`).join('')}</tbody></table></div></div>`},
+finance(){const e=can('finedit');return ph('Finance','Live view of the account, spending and income.',e?`<button class="btn" onclick="totalForm()">Update total account</button><button class="btn p" onclick="txForm()">+ Add transaction</button>`:'')+
+ `<div class="g4"><div class="cd kp hl"><small>Total account</small><div>${cr(S.total)}</div></div><div class="cd kp"><small>Spent so far</small><div>${cr(spentAll())}</div></div><div class="cd kp"><small>Income received</small><div>${cr(income())}</div></div><div class="cd kp"><small>Balance available</small><div>${cr(balance())}</div></div></div>
+ <div class="g2"><div class="cd"><h3>Department budgets</h3><div class="tw"><table><thead><tr><th>Department</th><th>Budget</th><th>Spent</th><th>Left</th>${e?'<th></th>':''}</tr></thead><tbody>${DN.map(d=>`<tr><td>${d}</td><td>${inr(bud(d))}</td><td>${inr(spent(d))}</td><td>${inr(bud(d)-spent(d))}</td>${e?`<td><button class="btn" style="padding:3px 9px;font-size:12px" onclick="budForm('${d}')">Set budget</button></td>`:''}</tr>`).join('')}</tbody></table></div></div>
+ <div class="cd"><h3>Last six months</h3><div class="cb">${chart()}</div></div></div>
+ <div class="cd"><h3>Transactions</h3><div class="tw"><table><thead><tr><th>Description</th><th>Department</th><th>Type</th><th>Amount</th><th>Date</th>${e?'<th></th>':''}</tr></thead><tbody>${[...S.tx].sort((a,b)=>b.d.localeCompare(a.d)).map(t=>`<tr><td>${esc(t.n)}</td><td>${esc(t.dept)}</td><td>${tag(t.t)}</td><td>${inr(t.a)}</td><td>${dd(t.d)}</td>${e?`<td>${t.seed?'':`<button class="btn no" style="padding:3px 9px;font-size:12px" onclick="delTx(${t.id})">Delete</button>`}</td>`:''}</tr>`).join('')}</tbody></table></div></div>`},
+employees(){setTimeout(empBody,0);return ph('Employees',`All ${EMP.length.toLocaleString('en-IN')} employees.`)+
+ `<div class="cd"><h3><span>Directory</span><span class="ac"><input class="srch" style="max-width:220px" placeholder="Name, ID or role" value="${esc(E.q)}" oninput="E.q=this.value;E.p=0;empBody()"><select class="srch" style="max-width:190px" onchange="E.d=this.value;E.p=0;empBody()">${['All',...DN].map(d=>`<option ${E.d===d?'selected':''}>${d}</option>`).join('')}</select></span></h3><div class="tw"><table><thead><tr><th>ID</th><th>Name</th><th>Role</th><th>Department</th></tr></thead><tbody id="eb"></tbody></table></div><div class="cb ac" id="ep" style="justify-content:space-between;border-top:1px solid var(--bd)"></div></div>`},
+departments(){return ph('Departments','Heads and strength.')+`<div class="g3">${D.map(d=>`<div class="cd dc"><h3>${d[0]}</h3><small>Head: ${esc(d[1])}</small><div class="row"><span>Employees</span><b>${d[2]}</b></div>${can('finance')?`<div class="row"><span>Budget</span><b>${inr(bud(d[0]))}</b></div><div class="pb"><span style="width:${Math.min(100,spent(d[0])/bud(d[0])*100)}%"></span></div>`:''}</div>`).join('')}</div>`},
+announcements(){return ph('Announcements','Notices and decisions for the organisation.',can('announce')?`<button class="btn p" onclick="annForm()">+ New announcement</button>`:'')+`<div class="cd"><div class="cb">${S.ann.map(a=>`<div class="row"><div><b>${esc(a.title)}</b><small>${esc(a.text)}</small><small>${esc(a.by)} · ${dd(a.date)}</small></div></div>`).join('')}</div></div>`},
+audit(){return ph('Audit log','Who did what, and when.')+`<div class="cd"><div class="cb">${S.log.map(l=>`<div class="row"><div>${esc(l.a)}<small>${esc(l.u)}</small></div><small>${esc(l.t)}</small></div>`).join('')}</div></div>`},
+access(){const ks=[...VW.map(v=>[v[0],v[1]]),...AC];return ph('Access control','Tick what each person can see or do. Changes apply the next time they open a page.',`<button class="btn p" onclick="userForm()">+ Add user</button>`)+
+ `<div class="cd"><div class="tw"><table style="min-width:1500px"><thead><tr><th>User</th>${ks.map((k,i)=>`<th class="c" style="${i===VW.length?'border-left:2px solid var(--gd)':''}">${k[1]}</th>`).join('')}<th></th></tr></thead><tbody>${S.users.map(u=>`<tr><td><b>${esc(u.name)}</b><small>${esc(u.email)}</small></td>${ks.map((k,i)=>`<td class="c" style="${i===VW.length?'border-left:2px solid var(--gd)':''}"><input type="checkbox" aria-label="${esc(u.name)}: ${k[1]}" ${u.perm[k[0]]?'checked':''} ${u.id===1&&(k[0]==='access'||k[0]==='dashboard')?'disabled':''} onchange="setPerm(${u.id},'${k[0]}',this.checked)"></td>`).join('')}<td>${u.id===1?tag('Owner'):`<button class="btn no" style="padding:3px 9px;font-size:12px" onclick="delUser(${u.id})">Remove</button>`}</td></tr>`).join('')}</tbody></table></div></div>
+ <p class="hint">Left of the gold line: pages a person can see. Right of it: actions a person can take. <button class="btn no" style="padding:3px 9px;font-size:12px" onclick="ask('Reset all data to the original sample data?',()=>{S=SEED();save();chips();logout();toast('Data reset')})">Reset all data</button></p>`}};
 
-const memRows=q=>{q=q.toLowerCase();const l=S.members.filter(m=>Object.values(m).join(' ').toLowerCase().includes(q));
- return l.map(m=>`<tr><td><b>${esc(m.name)}</b></td><td>${esc(m.role)}</td><td>${esc(m.dept)}</td><td>${esc(m.email)}</td><td>${tag(m.st)}</td><td class="ac"><button class="btn" onclick="memForm(${m.id})">Edit</button><button class="btn no" onclick="del('members',${m.id},'member')">Delete</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No members match. Try a different search.</td></tr>'};
-const annRows=l=>l.map(a=>`<div class="row"><div><b>${esc(a.title)}</b><small>${esc(a.text)}</small><small>${esc(a.cat)} · ${dd(a.date)}</small></div><button class="btn no" onclick="del('ann',${a.id},'announcement')">Delete</button></div>`).join('')||'<div class="empty">No announcements yet.</div>';
+/* case workflow */
+const hist=(c,a,n)=>c.h.push({t:now(),by:`${ME.name} (${ME.office})`,a,n});
+function showCase(id){const c=S.cases.find(x=>x.id===id),b=[];
+ can('enquiry')&&b.push(`<button class="btn" onclick="enqForm('${id}')">Do enquiry</button>`);
+ can('review')&&b.push(`<button class="btn" onclick="revForm('${id}')">Review & take action</button>`);
+ can('forward')&&b.push(`<button class="btn" onclick="fwdForm('${id}')">Forward</button>`);
+ can('announce')&&b.push(`<button class="btn g" onclick="decForm('${id}')">Announce decision</button>`);
+ modal(`${c.id}: ${esc(c.title)}`,`<div class="ac" style="margin-bottom:8px">${tag(c.st)}${tag(c.sev)}<span class="tg">With ${esc(c.holder)}</span></div>
+ <div class="row"><span>Against</span><b>${esc(who(c.against))}</b></div><div class="row"><span>Department</span><b>${esc(c.dept)}</b></div><p style="margin:10px 0">${esc(c.desc)}</p>
+ <b>Timeline</b><div class="tl">${c.h.map(x=>`<div><b>${esc(x.a)}</b><small>${esc(x.by)} · ${esc(x.t)}</small>${esc(x.n)}</div>`).join('')}</div>`,
+ b.join('')||'<span class="hint">You can view this case but not act on it.</span>')}
+function caseForm(id,t,f,fn,lbl){form(t,f,v=>{const c=S.cases.find(x=>x.id===id);fn(c,v);save();log(`${c.id}: ${v._a||t}`);go('cases');showCase(id);toast('Saved')},lbl)}
+function enqForm(id){caseForm(id,'Do enquiry',[{k:'n',l:'Enquiry findings',t:'area'}],(c,v)=>{if(!v.n){return}c.st='Under Enquiry';hist(c,'Enquiry update',v.n)},'Save enquiry')}
+function revForm(id){caseForm(id,'Review & take action',[{k:'a',l:'Action decided',o:['No action','Warning','Fine','Suspension','Termination']},{k:'amt',l:'Fine amount (₹, only for Fine)',t:'number'},{k:'n',l:'Review note',t:'area'}],(c,v)=>{c.st='Action Taken';c.action=v.a;c.amt=+v.amt||0;hist(c,'Action taken: '+v.a+(c.amt?' '+inr(c.amt):''),v.n)},'Save action')}
+function fwdForm(id){const c=S.cases.find(x=>x.id===id);caseForm(id,'Forward case',[{k:'to',l:'Forward to',o:OFF.filter(o=>o!==c.holder)},{k:'n',l:'Note for the receiver',t:'area'}],(c,v)=>{c.holder=v.to;hist(c,'Forwarded to '+v.to,v.n)},'Forward')}
+function decForm(id){const c=S.cases.find(x=>x.id===id);caseForm(id,'Announce decision',[{k:'n',l:'Decision announcement',t:'area',v:c.action?`Action taken: ${c.action}. `:''},{k:'p',l:'Penalty',o:['None',...PT]},{k:'amt',l:'Fine amount (₹)',t:'number',v:c.amt||''}],(c,v)=>{if(!v.n)return;c.st='Decision announced';hist(c,'Decision announced',v.n);
+  S.ann.unshift({id:nid(S.ann),title:`Decision on ${c.id}: ${c.title}`,text:v.n,date:today(),by:ME.office});
+  if(v.p!=='None')S.pen.push({id:nid(S.pen),caseId:c.id,emp:c.against,type:v.p,amt:v.p==='Fine'?+v.amt||0:0,date:today(),by:ME.office,st:'Imposed'})},'Announce')}
+function complaintForm(){form('Register complaint',[{k:'title',l:'Complaint title'},{k:'against',l:'Employee ID (e.g. EMP0412)'},{k:'dept',l:'Department',o:DN},{k:'sev',l:'Severity',o:['Low','Medium','High']},{k:'desc',l:'What happened',t:'area'}],v=>{
+ if(!v.title||!v.against||!v.desc){toast('Fill in all required fields.');return}if(!EMP.some(e=>e.id===v.against.toUpperCase())){toast('No employee with that ID. Check the Employees page.');return}
+ const c={id:'CASE-'+(1001+S.cases.length),...v,against:v.against.toUpperCase(),st:'Registered',holder:ME.office,h:[]};hist(c,'Complaint registered',v.desc);S.cases.push(c);log('Registered '+c.id);save();cm();go('cases');toast('Complaint registered as '+c.id)},'Register')}
+function penForm(){form('Add penalty',[{k:'emp',l:'Employee ID'},{k:'type',l:'Penalty',o:PT},{k:'amt',l:'Fine amount (₹)',t:'number'},{k:'caseId',l:'Case ID (optional)'}],v=>{
+ if(!EMP.some(e=>e.id===v.emp.toUpperCase())){toast('No employee with that ID.');return}
+ S.pen.push({id:nid(S.pen),caseId:v.caseId||'-',emp:v.emp.toUpperCase(),type:v.type,amt:v.type==='Fine'?+v.amt||0:0,date:today(),by:ME.office,st:'Imposed'});log('Added penalty: '+v.emp);save();cm();go('penalties');toast('Penalty added')},'Add penalty')}
+function collect(id){const p=S.pen.find(x=>x.id===id);p.st='Collected';S.tx.push({id:nid(S.tx),d:today(),n:'Penalty fine: '+p.emp,dept:'Financial Team',t:'Income',a:p.amt});log('Collected fine from '+p.emp);save();go('penalties');toast('Fine collected and added to income')}
 
-function decide(id,ok){const a=S.appr.find(x=>x.id===id);a.st=ok?'Approved':'Rejected';
- if(ok&&a.type==='Expense'&&a.amt)S.tx.push({id:nid(S.tx),d:today(),n:a.title,t:'Expense',a:a.amt});
- log(`${ok?'Approved':'Rejected'}: ${a.title}`);save();go(view);toast(ok?'Approved':'Rejected')}
-function del(k,id,w){ask(`Delete this ${w}?`,()=>{const o=S[k].find(x=>x.id===id);S[k]=S[k].filter(x=>x.id!==id);log(`Deleted ${w}: ${o.name||o.title||o.n}`);save();go(view);toast('Deleted')})}
-function gs(v){v=v.toLowerCase().trim();if(!v)return;const m=S.members.find(m=>Object.values(m).join(' ').toLowerCase().includes(v));if(m){view='members';go('members');$('#mt2').innerHTML=memRows(v)}}
+/* finance + admin */
+function txForm(){form('Add transaction',[{k:'n',l:'Description'},{k:'a',l:'Amount (₹)',t:'number'},{k:'t',l:'Type',o:['Expense','Income']},{k:'dept',l:'Department',o:DN},{k:'d',l:'Date',t:'date',v:today()}],v=>{
+ if(!v.n||!v.a||!v.d){toast('Fill in all required fields.');return}S.tx.push({id:nid(S.tx),n:v.n,t:v.t,dept:v.dept,d:v.d,a:Math.abs(+v.a)});log(`Added ${v.t.toLowerCase()}: ${v.n}`);save();cm();go('finance');toast('Transaction added')},'Add transaction')}
+function totalForm(){form('Update total account',[{k:'a',l:'Total account (₹)',t:'number',v:S.total}],v=>{if(!(+v.a>0)){toast('Enter an amount above zero.');return}S.total=+v.a;log('Total account set to '+inr(S.total));save();cm();go('finance');toast('Total account updated')},'Update')}
+function budForm(d){form('Set budget: '+d,[{k:'a',l:'Budget (₹)',t:'number',v:bud(d)}],v=>{if(!(+v.a>0)){toast('Enter an amount above zero.');return}S.bud[d]=+v.a;log(`Budget for ${d} set to ${inr(+v.a)}`);save();cm();go('finance');toast('Budget updated')},'Update')}
+function delTx(id){ask('Delete this transaction?',()=>{S.tx=S.tx.filter(x=>x.id!==id);log('Deleted a transaction');save();go('finance');toast('Deleted')})}
+function annForm(){form('New announcement',[{k:'title',l:'Title'},{k:'text',l:'Message',t:'area'}],v=>{if(!v.title||!v.text){toast('Fill in all required fields.');return}S.ann.unshift({id:nid(S.ann),...v,date:today(),by:ME.office});log('Announced: '+v.title);save();cm();go('announcements');toast('Announced')},'Announce')}
+function setPerm(id,k,on){const u=S.users.find(x=>x.id===id);if(on)u.perm[k]=1;else delete u.perm[k];log(`${u.name}: ${on?'granted':'removed'} ${k}`);save();toast('Access updated')}
+function delUser(id){const u=S.users.find(x=>x.id===id);ask(`Remove ${u.name}? They will no longer be able to sign in.`,()=>{S.users=S.users.filter(x=>x.id!==id);log('Removed user '+u.name);save();chips();go('access');toast('User removed')})}
+function userForm(){form('Add user',[{k:'name',l:'Full name'},{k:'email',l:'Email',t:'email'},{k:'pw',l:'Password'},{k:'role',l:'Role'},{k:'office',l:'Office they act as',o:[...OFF,'Financial Team']}],v=>{
+ if(!v.name||!v.email||!v.pw||!v.role){toast('Fill in all required fields.');return}if(S.users.some(u=>u.email.toLowerCase()===v.email.toLowerCase())){toast('That email already has an account.');return}
+ S.users.push({id:nid(S.users),...v,perm:mk('dashboard')});log('Added user '+v.name);save();chips();cm();go('access');toast('User added. Tick their access below.')},'Add user')}
 
+/* modal helpers */
 let F=[],OK=()=>{};
+function modal(t,b,f){$('#mt').textContent=t;$('#mb').innerHTML=b;$('#mf').innerHTML=f;$('#mo').classList.add('on')}
 function cm(){$('#mo').classList.remove('on')}
-function form(t,f,ok,v={},label='Save'){F=f;OK=ok;$('#mt').textContent=t;
- $('#mb').innerHTML=f.map(x=>`<div class="fg"><label for="f_${x.k}">${x.l}</label>${x.o?`<select id="f_${x.k}">${x.o.map(o=>`<option ${v[x.k]==o?'selected':''}>${o}</option>`).join('')}</select>`:x.t==='area'?`<textarea id="f_${x.k}">${esc(v[x.k]||'')}</textarea>`:`<input id="f_${x.k}" type="${x.t||'text'}" value="${esc(v[x.k]??'')}">`}</div>`).join('');
- $('#mf').innerHTML=`<button class="btn" onclick="cm()">Cancel</button><button class="btn p" onclick="sub()">${label}</button>`;$('#mo').classList.add('on')}
+function form(t,f,ok,label='Save'){F=f;OK=ok;modal(t,f.map(x=>`<div class="fg"><label for="f_${x.k}">${x.l}</label>${x.o?`<select id="f_${x.k}">${x.o.map(o=>`<option>${o}</option>`).join('')}</select>`:x.t==='area'?`<textarea id="f_${x.k}">${esc(x.v||'')}</textarea>`:`<input id="f_${x.k}" type="${x.t||'text'}" value="${esc(x.v||'')}">`}</div>`).join(''),`<button class="btn" onclick="cm()">Cancel</button><button class="btn p" onclick="sub()">${label}</button>`)}
 function sub(){const v={};F.forEach(f=>v[f.k]=$('#f_'+f.k).value.trim());OK(v)}
-function ask(msg,fn){F=[];OK=()=>{cm();fn()};$('#mt').textContent='Please confirm';$('#mb').innerHTML=`<p>${esc(msg)}</p>`;$('#mf').innerHTML=`<button class="btn" onclick="cm()">Cancel</button><button class="btn no" onclick="sub()">Yes, continue</button>`;$('#mo').classList.add('on')}
-function toast(m){const e=document.createElement('div');e.className='t';e.textContent=m;$('#ts').appendChild(e);setTimeout(()=>e.remove(),2800)}
-function need(v,k){if(k.some(x=>!v[x])){toast('Fill in all required fields.');return false}return true}
-
-function memForm(id){const m=S.members.find(x=>x.id===id)||{};
- form(id?'Edit member':'Add member',[{k:'name',l:'Full name'},{k:'role',l:'Role'},{k:'dept',l:'Department',o:DEPTS.map(d=>d[0])},{k:'email',l:'Email',t:'email'},{k:'st',l:'Status',o:['Active','Pending']}],v=>{
-  if(!need(v,['name','email']))return;
-  if(id){Object.assign(m,v);log('Updated member: '+v.name)}else{S.members.push({id:nid(S.members),...v});log('Added member: '+v.name)}
-  save();cm();go('members');toast('Member saved')},m)}
-function annForm(){form('New announcement',[{k:'title',l:'Title'},{k:'cat',l:'Category',o:['System','Meeting','Policy']},{k:'text',l:'Message',t:'area'}],v=>{
- if(!need(v,['title','text']))return;S.ann.unshift({id:nid(S.ann),...v,date:today()});log('Published announcement: '+v.title);save();cm();go('announcements');toast('Published')},{},'Publish')}
-function txForm(){form('Add transaction',[{k:'n',l:'Description'},{k:'a',l:'Amount (₹)',t:'number'},{k:'t',l:'Type',o:['Income','Expense']},{k:'d',l:'Date',t:'date'}],v=>{
- if(!need(v,['n','a','d']))return;S.tx.push({id:nid(S.tx),n:v.n,t:v.t,d:v.d,a:Math.abs(+v.a)});log(`Added ${v.t.toLowerCase()}: ${v.n}`);save();cm();go('finance');toast('Transaction added')},{d:today()})}
-function meetForm(){form('Schedule meeting',[{k:'title',l:'Title'},{k:'who',l:'Attendees'},{k:'d',l:'Date',t:'date'},{k:'tm',l:'Time',t:'time'}],v=>{
- if(!need(v,['title','d','tm']))return;S.meet.push({id:nid(S.meet),...v});log('Scheduled meeting: '+v.title);save();cm();go('meetings');toast('Meeting scheduled')},{tm:'10:00'},'Schedule')}
+function ask(msg,fn){F=[];OK=()=>{cm();fn()};modal('Please confirm',`<p>${esc(msg)}</p>`,`<button class="btn" onclick="cm()">Cancel</button><button class="btn no" onclick="sub()">Yes, continue</button>`)}
+function toast(m){const e=document.createElement('div');e.className='t';e.textContent=m;$('#ts').appendChild(e);setTimeout(()=>e.remove(),2600)}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cm()});
 </script>
 </body>
 </html>
