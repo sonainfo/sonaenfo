@@ -97,7 +97,7 @@ td.c{text-align:center}
   <div class="chips" id="chips"></div>
   <div class="fg"><label for="em">Email</label><input id="em" type="email" autocomplete="username"></div>
   <div class="fg"><label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
-  <div class="err" id="le"></div>
+  <div class="err" id="le"></div><div class="hint" id="sy" style="margin:-6px 0 10px">Connecting to shared data...</div>
   <button class="btn p w" onclick="login()">Sign in</button>
   <p class="hint">Chairman: chairman@sonainfo.com / admin<br>SEC: sec@sonainfo.com / admins · HOD: hod@sonainfo.com / adminh<br>Disciplinary: dc@sonainfo.com / admind · Finance: financial@sonainfo.com / adminf<br>Data stays in this browser only.</p></div>
 </div></div>
@@ -144,9 +144,12 @@ const SEED=()=>({total:60000000,bud:{},
  tx:[{id:1,d:'2026-05-14',n:'Client retainer',dept:'Client Department',t:'Income',a:5200000,seed:1},{id:2,d:'2026-06-20',n:'Salaries',dept:'Financial Team',t:'Expense',a:6100000,seed:1},{id:3,d:'2026-07-15',n:'Client retainer',dept:'Client Department',t:'Income',a:4800000,seed:1},{id:4,d:'2026-08-22',n:'Salaries',dept:'Financial Team',t:'Expense',a:6400000,seed:1},{id:5,d:'2026-09-18',n:'Client retainer',dept:'Client Department',t:'Income',a:5600000,seed:1},{id:6,d:'2026-10-02',n:'Cloud and hosting',dept:'IT',t:'Expense',a:410000,seed:1}],
  ann:[{id:1,title:'Portal access rights updated',text:'Each office now has role-based access to cases, penalties and finance.',date:'2026-10-02',by:'Satrunjay'}],
  log:[{t:'02 Oct 2026, 18:10',a:'Portal set up',u:'System'}]});
-let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
-if(!S||!S.users)S=SEED();
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let S=SEED(),DB=null,READY=false;const SENT={};
+const DOCS={users:()=>({items:S.users}),cases:()=>({items:S.cases}),pen:()=>({items:S.pen}),ann:()=>({items:S.ann}),log:()=>({items:S.log}),fin:()=>({total:S.total,bud:S.bud,tx:S.tx})};
+const APPLY={users:d=>S.users=d.items,cases:d=>S.cases=d.items,pen:d=>S.pen=d.items,ann:d=>S.ann=d.items,log:d=>S.log=d.items,fin:d=>{S.total=d.total;S.bud=d.bud||{};S.tx=d.tx}};
+const save=()=>{if(!DB){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}return}
+ if(!READY)return;
+ for(const k in DOCS){const b=DOCS[k](),j=JSON.stringify(b);if(SENT[k]!==j){SENT[k]=j;DB.doc('app/'+k).set(b).catch(e=>{SENT[k]=null;toast(e&&e.code==='invalid_argument'?'Not saved. Ask the owner to share this page with you as a Contributor.':'Not saved. Check your connection and try again.')})}}};
 let ME=null,view='dashboard';
 const can=k=>!!(ME&&ME.perm[k]);
 const log=a=>{S.log.unshift({t:now(),a,u:ME?ME.name:'System'});S.log=S.log.slice(0,100);save()};
@@ -158,14 +161,13 @@ const EMP=(()=>{let s=7;const r=()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>
 const who=id=>{const e=EMP.find(x=>x.id===id);return e?`${e.name} (${e.id})`:id};
 
 /* auth */
-const chips=()=>$('#chips').innerHTML=S.users.map(u=>`<button class="chip" onclick="fill('${esc(u.email)}')">${esc(u.role)}</button>`).join('');chips();
+const chips=()=>$('#chips').innerHTML=S.users.map(u=>`<button class="chip" onclick="fill('${esc(u.email)}')">${esc(u.role)}</button>`).join('');
 function fill(e){const u=S.users.find(x=>x.email===e);$('#em').value=u.email;$('#pw').value=u.pw}
-function login(){const u=S.users.find(x=>x.email.toLowerCase()===$('#em').value.trim().toLowerCase()&&x.pw===$('#pw').value);
+function login(){if(!READY){$('#le').textContent='Still connecting to shared data. Try again in a moment.';return}const u=S.users.find(x=>x.email.toLowerCase()===$('#em').value.trim().toLowerCase()&&x.pw===$('#pw').value);
  if(!u){$('#le').textContent='Email or password is incorrect. Tap an account above to fill it in.';return}
  try{sessionStorage.setItem('sona_u',u.id)}catch(e){}start(u)}
-function start(u){ME=u;$('#le').textContent='';$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#meN').textContent=u.name;$('#meR').textContent=u.role;log('Signed in');go('dashboard')}
+function start(u,q){ME=u;$('#le').textContent='';$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#meN').textContent=u.name;$('#meR').textContent=u.role;q||log('Signed in');go('dashboard')}
 function logout(){try{sessionStorage.removeItem('sona_u')}catch(e){}ME=null;$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#pw').value=''}
-try{const u=S.users.find(x=>x.id===+sessionStorage.getItem('sona_u'));if(u)start(u)}catch(e){}
 function theme(){const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'}
 
 const mine=()=>S.cases.filter(c=>c.holder===ME.office);
@@ -267,6 +269,16 @@ function sub(){const v={};F.forEach(f=>v[f.k]=$('#f_'+f.k).value.trim());OK(v)}
 function ask(msg,fn){F=[];OK=()=>{cm();fn()};modal('Please confirm',`<p>${esc(msg)}</p>`,`<button class="btn" onclick="cm()">Cancel</button><button class="btn no" onclick="sub()">Yes, continue</button>`)}
 function toast(m){const e=document.createElement('div');e.className='t';e.textContent=m;$('#ts').appendChild(e);setTimeout(()=>e.remove(),2600)}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')cm()});
+
+function ready(){chips();$('#sy').textContent=DB?'Shared data is on. Every device sees the same cases, penalties and finance.':'Shared data is off in this view, so changes stay in this browser only.';
+ try{const u=S.users.find(x=>x.id===+sessionStorage.getItem('sona_u'));if(u)start(u,1)}catch(e){}}
+function refresh(){if(!ME)return;const u=S.users.find(x=>x.id===ME.id);if(!u){toast('Your account was removed.');logout();return}ME=u;$('#meN').textContent=u.name;$('#meR').textContent=u.role;chips();
+ if(!$('#mo').classList.contains('on')&&view!=='employees')go(view);else if(view==='employees')go(view)}
+function sync(db){DB=db;let n=0;const K=Object.keys(DOCS);K.forEach(k=>db.doc('app/'+k).onSnapshot(s=>{const first=!(k in SENT);let ch=false;
+ if(s.exists){const o=JSON.stringify(DOCS[k]());APPLY[k](s.data());const w=JSON.stringify(DOCS[k]());ch=o!==w;SENT[k]=w}else if(first)SENT[k]=null;
+ if(first&&++n===K.length){READY=true;ready()}else if(READY&&ch)refresh()},e=>{$('#sy').textContent='Lost connection to shared data. Reload the page.';toast('Lost connection to shared data.')}))}
+(async()=>{let db=null;try{if(typeof claude!=='undefined')db=await claude.use('db')}catch(e){}
+ if(db)sync(db);else{try{const l=JSON.parse(localStorage.getItem(KEY));if(l&&l.users)S=l}catch(e){}READY=true;ready()}})();
 </script>
 </body>
 </html>
