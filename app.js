@@ -48,11 +48,62 @@ const effE=e=>Object.assign({},e,S.ov[e.id]||{});const who=id=>{const e=EMP.find
 /* auth */
 const chips=()=>$('#chips').innerHTML=DB?'':S.users.map(u=>`<button class="chip" onclick="fill('${esc(u.email)}')">${esc(u.role)}</button>`).join('');
 function fill(e){const u=S.users.find(x=>x.email===e);$('#em').value=u.email;$('#pw').value=DB?'':(u.pw||'')}
-async function login(){if(!READY&&!DB){$('#le').textContent='Still loading. Try again in a moment.';return}
- const em=$('#em').value.trim().toLowerCase(),pw=$('#pw').value;
- if(DB){$('#le').textContent='Signing in...';try{await SYNC.login(em,pw)}catch(e){$('#le').textContent='Email or password is incorrect.'}return}
- const u=S.users.find(x=>x.email.toLowerCase()===em&&x.pw===pw);if(!u){$('#le').textContent='Email or password is incorrect.';return}
- try{sessionStorage.setItem('sona_u',u.id)}catch(e){}start(u)}
+
+async function login(){
+ if(!READY&&!DB){
+  $('#le').textContent='Still loading. Try again in a moment.';
+  return;
+ }
+
+ const em=$('#em').value.trim().toLowerCase();
+ const pw=$('#pw').value;
+
+ /* Firebase login first */
+ if(DB){
+  $('#le').textContent='Signing in...';
+
+  try{
+   await SYNC.login(em,pw);
+   return;
+  }catch(e){
+   console.warn('Firebase login failed:',e);
+
+   /* Firebase failed -> existing hardcoded/local login */
+   const u=S.users.find(x=>x.email.toLowerCase()===em&&x.pw===pw);
+
+   if(u){
+    DB=false;
+    READY=true;
+    pill();
+
+    try{
+     sessionStorage.setItem('sona_u',u.id);
+    }catch(x){}
+
+    start(u);
+    return;
+   }
+
+   $('#le').textContent='Email or password is incorrect.';
+   return;
+  }
+ }
+
+ /* Original hardcoded/offline login */
+ const u=S.users.find(x=>x.email.toLowerCase()===em&&x.pw===pw);
+
+ if(!u){
+  $('#le').textContent='Email or password is incorrect.';
+  return;
+ }
+
+ try{
+  sessionStorage.setItem('sona_u',u.id);
+ }catch(e){}
+
+ start(u);
+}
+
 function start(u,q){ME=u;$('#le').textContent='';$('#login').classList.add('hide');$('#app').classList.remove('hide');$('#meN').textContent=u.name;$('#meR').textContent=u.role;try{migrate()}catch(e){console.error(e)}q||log('Signed in');go('dashboard')}
 function logout(){try{sessionStorage.removeItem('sona_u')}catch(e){}if(DB)SYNC.logout();ME=null;$('#app').classList.add('hide');$('#login').classList.remove('hide');$('#pw').value=''}
 function theme(){const r=document.documentElement,d=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme:dark)').matches;r.dataset.theme=d?'light':'dark'}
@@ -150,6 +201,7 @@ function userForm(){form('Add user',[{k:'name',l:'Full name'},{k:'email',l:'Emai
  if(!v.name||!v.email||v.pw.length<6||!v.role){toast('Fill in all fields. Password needs 6 or more characters.');return}if(S.users.some(u=>u.email.toLowerCase()===v.email.toLowerCase())){toast('That email already has an account.');return}
  if(DB){try{await SYNC.create(v.email,v.pw)}catch(e){toast('Could not create the login: '+(e.code||'error'));return}}
  const u={id:nid(S.users),name:v.name,email:v.email,role:v.role,office:v.office,perm:mk('dashboard')};if(!DB)u.pw=v.pw;S.users.push(u);log('Added user '+v.name);save();chips();cm();go('access');toast('User added. Tick their access below.')},'Add user')}
+
 /* modal helpers */
 let F=[],OK=()=>{};
 function modal(t,b,f){$('#mt').textContent=t;$('#mb').innerHTML=b;$('#mf').innerHTML=f;$('#mo').classList.add('on')}
@@ -212,7 +264,7 @@ function fixUsers(){const V1='dashboard cases penalties finance employees depart
  N.forEach(n=>{let u=S.users.find(x=>x.email.toLowerCase()===n[0]);if(!u){u={id:nid(S.users),email:n[0],pw:n[5]};S.users.push(u)}Object.assign(u,{name:n[1],role:n[2],office:n[3],perm:mk(n[4])})});return true}
 fixUsers();
 const VWX=()=>[...VW,...S.cust.sections.map(x=>['sec_'+x.id,x.name,'▤'])];
-function openCm(key,title){const l=S.cm[key]||[],w=can('comment');modal('Comments: '+title,(l.map(c=>`<div class="row"><div><b>${esc(c.by)}</b><small>${esc(c.t)}</small>${esc(c.x)}</div></div>`).join('')||'<div class="empty">No comments yet.</div>')+(w?'<div class="fg" style="margin-top:12px"><textarea id="cmx" placeholder="Write a comment"></textarea></div>':''),'<button class="btn" onclick="cm()">Close</button>'+(w?`<button class="btn p" onclick="addCm('${key}','${esc(title)}')">Post comment</button>`:''))}
+function openCm(key,title){const l=S.cm[key]||[],w=can('comment');modal('Comments: '+title,(l.map(c=>`<div class="row"><div><b>${esc(c.by)}</b><small>${esc(c.t)}</small>${esc(c.x)}</div></div>`).join('')||'<div class="empty">No comments yet.</div>')+(w?'<div class="fg" style="margin-top:12px"><textarea id="cmx" placeholder="Write a comment"></textarea></div>':''),'<button class="btn" onclick="cm()">Close</button>'+(w?`<button class="btn p" onclick="addCm('${key}','${esc(title)}')">Post comment</button>`:'')}
 function addCm(key,title){const x=$('#cmx').value.trim();if(!x)return;(S.cm[key]=S.cm[key]||[]).push({by:`${ME.name} (${ME.role})`,t:now(),x});log('Commented on '+title);save();openCm(key,title)}
 function stForm(id){caseForm(id,'Change status',[{k:'s',l:'New status',o:ST,v:S.cases.find(x=>x.id===id).st},{k:'n',l:'Note (optional)',t:'area'}],(c,v)=>{c.st=v.s;hist(c,'Status changed to '+v.s,v.n||'')},'Update status')}
 function unpay(id){const p=S.pen.find(x=>x.id===id);p.st='Imposed';S.tx=S.tx.filter(t=>t.id!==p.txId);delete p.txId;log('Marked unpaid: '+p.emp);save();go('penalties');toast('Marked unpaid and removed from income')}
@@ -222,6 +274,7 @@ function loginForm(id){const u=S.users.find(x=>x.id===id);form('Login for '+u.na
  if(DB){if(em!==u.email.toLowerCase()){if(v.pw.length<6){toast('Set a password of 6 or more characters for the new email.');return}try{await SYNC.create(em,v.pw)}catch(e){toast('Could not create the login: '+(e.code||'error'));return}}else if(v.pw){try{await SYNC.reset(em);toast('Password reset email sent to '+em)}catch(e){toast('Could not send the reset email.');return}}}
  else if(v.pw)u.pw=v.pw;
  u.email=em;log('Updated login for '+u.name);save();cm();go('access');toast('Login updated')},'Save login')}
+
 /* tokens */
 const tokSt=b=>{const n=Date.now(),o=new Date(b.openAt).getTime(),e=b.endAt?new Date(b.endAt).getTime():Infinity;return b.off?'Disabled':n<o?'Scheduled':(n>e||b.codes.slice(0,b.release).every(c=>c.u))?'Closed':'Open'};
 V.tokens=()=>{clearInterval(window.__tk);window.__tk=setInterval(()=>{if(view==='tokens'&&!$('#mo').classList.contains('on'))go('tokens')},30000);
