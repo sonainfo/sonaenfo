@@ -1,6 +1,4 @@
-import {
-  initializeApp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
 import {
   getFirestore,
@@ -11,6 +9,8 @@ import {
 
 import {
   getAuth,
+  setPersistence,
+  browserLocalPersistence,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
@@ -21,10 +21,6 @@ import {
 
 const cfg = window.FIREBASE_CONFIG;
 
-
-/* ================================
-   FIREBASE INITIALIZATION
-   ================================ */
 
 if (
   cfg &&
@@ -41,14 +37,35 @@ if (
   const auth = getAuth(app);
 
 
-  /* ================================
-     SHARED FIRESTORE + AUTH API
-     ================================ */
+  /*
+   * IMPORTANT:
+   * Keep Firebase login alive after browser/page refresh.
+   */
+  const persistenceReady = setPersistence(
+    auth,
+    browserLocalPersistence
+  ).catch(err => {
+
+    console.error(
+      "Firebase persistence error:",
+      err
+    );
+
+    throw err;
+
+  });
+
 
   window.SYNC = {
 
-    /* Listen to a Firestore document */
-    watch: (key, success, error) => {
+    /*
+     * FIRESTORE WATCH
+     */
+    watch: (
+      key,
+      success,
+      error
+    ) => {
 
       return onSnapshot(
         doc(db, "app", key),
@@ -70,10 +87,17 @@ if (
     },
 
 
-    /* Save data to Firestore */
-    set: (key, data) => {
+    /*
+     * FIRESTORE SAVE
+     */
+    set: async (
+      key,
+      data
+    ) => {
 
-      return setDoc(
+      await persistenceReady;
+
+      await setDoc(
         doc(db, "app", key),
         data
       );
@@ -81,8 +105,15 @@ if (
     },
 
 
-    /* Firebase login */
-    login: (email, password) => {
+    /*
+     * FIREBASE LOGIN
+     */
+    login: async (
+      email,
+      password
+    ) => {
+
+      await persistenceReady;
 
       return signInWithEmailAndPassword(
         auth,
@@ -93,37 +124,58 @@ if (
     },
 
 
-    /* Firebase logout */
-    logout: () => {
+    /*
+     * FIREBASE LOGOUT
+     */
+    logout: async () => {
 
-      return signOut(auth);
+      await signOut(auth);
 
     },
 
 
-    /* Current Firebase user */
+    /*
+     * CURRENT USER
+     */
     who: callback => {
 
-      return onAuthStateChanged(
-        auth,
+      persistenceReady
+        .then(() => {
 
-        user => {
+          onAuthStateChanged(
+            auth,
+            user => {
 
-          callback(
-            user
-              ? user.email
-              : null
+              callback(
+                user
+                  ? user.email
+                  : null
+              );
+
+            }
           );
 
-        }
+        })
+        .catch(err => {
 
-      );
+          console.error(
+            "Firebase auth initialization error:",
+            err
+          );
+
+          callback(null);
+
+        });
 
     },
 
 
-    /* Password reset */
-    reset: email => {
+    /*
+     * PASSWORD RESET
+     */
+    reset: async email => {
+
+      await persistenceReady;
 
       return sendPasswordResetEmail(
         auth,
@@ -133,15 +185,27 @@ if (
     },
 
 
-    /* Create Firebase user */
-    create: async (email, password) => {
+    /*
+     * CREATE NEW FIREBASE USER
+     */
+    create: async (
+      email,
+      password
+    ) => {
 
-      const newApp = initializeApp(
-        cfg,
-        "create-" + Date.now()
+      const newApp =
+        initializeApp(
+          cfg,
+          "create-" + Date.now()
+        );
+
+      const newAuth =
+        getAuth(newApp);
+
+      await setPersistence(
+        newAuth,
+        browserLocalPersistence
       );
-
-      const newAuth = getAuth(newApp);
 
       await createUserWithEmailAndPassword(
         newAuth,
@@ -153,6 +217,7 @@ if (
 
   };
 
+
 } else {
 
   console.error(
@@ -161,8 +226,6 @@ if (
 
 }
 
-
-/* Tell app.js that sync.js has loaded */
 
 window.__syncReady = true;
 
