@@ -1,11 +1,12 @@
 /* =========================================================
    SONAINFO EXECUTIVE PORTAL
-   FIREBASE-FREE SYNC
+   FIREBASE-FREE SYNCHRONIZATION
    Render API + PostgreSQL + WebSocket
-   ========================================================= */
+========================================================= */
 
 const API_BASE =
   "https://sonainfo-backend-2.onrender.com";
+
 
 const ACCESS_KEY =
   "sonainfo_access_token";
@@ -13,66 +14,108 @@ const ACCESS_KEY =
 const REFRESH_KEY =
   "sonainfo_refresh_token";
 
+
 let accessToken =
-  localStorage.getItem(ACCESS_KEY) || "";
+  localStorage.getItem(
+    ACCESS_KEY
+  ) || "";
+
 
 let refreshToken =
-  localStorage.getItem(REFRESH_KEY) || "";
+  localStorage.getItem(
+    REFRESH_KEY
+  ) || "";
+
 
 let whoCallback = null;
 
 let socket = null;
+
 let socketRetryTimer = null;
+
 let socketRetryMs = 1000;
+
 let socketConnecting = false;
 
-const watchers = new Map();
-const versions = new Map();
+
+const watchers =
+  new Map();
+
+
+const versions =
+  new Map();
 
 
 /* =========================================================
    TOKEN MANAGEMENT
-   ========================================================= */
+========================================================= */
 
-function saveTokens(access, refresh) {
+function saveTokens(
+  access,
+  refresh
+){
 
-  accessToken = access || "";
+  accessToken =
+    access || "";
 
-  if (refresh !== undefined)
-    refreshToken = refresh || "";
 
-  if (accessToken)
+  /*
+   * IMPORTANT:
+   * Refresh endpoint returns only
+   * accessToken.
+   *
+   * Therefore old refresh token
+   * must be preserved.
+   */
+
+  if(
+    refresh !== undefined
+  ){
+
+    refreshToken =
+      refresh || "";
+
+  }
+
+
+  if(accessToken){
+
     localStorage.setItem(
       ACCESS_KEY,
       accessToken
     );
-  else
+
+  }else{
+
     localStorage.removeItem(
       ACCESS_KEY
     );
 
-  /*
-   * IMPORTANT:
-   * Render refresh endpoint does NOT return
-   * another refresh token.
-   *
-   * Therefore we keep the old one.
-   */
-  if (refreshToken)
+  }
+
+
+  if(refreshToken){
+
     localStorage.setItem(
       REFRESH_KEY,
       refreshToken
     );
-  else
+
+  }else{
+
     localStorage.removeItem(
       REFRESH_KEY
     );
+
+  }
+
 }
 
 
-function clearTokens() {
+function clearTokens(){
 
   accessToken = "";
+
   refreshToken = "";
 
   localStorage.removeItem(
@@ -82,47 +125,57 @@ function clearTokens() {
   localStorage.removeItem(
     REFRESH_KEY
   );
+
 }
 
 
 /* =========================================================
-   HTTP
-   ========================================================= */
+   HTTP REQUEST
+========================================================= */
 
 async function rawFetch(
   path,
   options = {}
-) {
+){
 
   const headers =
     new Headers(
       options.headers || {}
     );
 
+
   headers.set(
     "Accept",
     "application/json"
   );
 
-  if (
+
+  if(
     options.body &&
     !(options.body instanceof FormData) &&
-    !headers.has("Content-Type")
-  ) {
+    !headers.has(
+      "Content-Type"
+    )
+  ){
 
     headers.set(
       "Content-Type",
       "application/json"
     );
+
   }
 
-  if (accessToken) {
+
+  if(accessToken){
 
     headers.set(
       "Authorization",
-      "Bearer " + accessToken
+      "Bearer " +
+      accessToken
     );
+
   }
+
 
   const response =
     await fetch(
@@ -133,19 +186,23 @@ async function rawFetch(
       }
     );
 
+
   let body = null;
 
-  try {
+
+  try{
 
     body =
       await response.json();
 
-  } catch (_) {
+  }catch(_){
 
     body = null;
+
   }
 
-  if (!response.ok) {
+
+  if(!response.ok){
 
     const error =
       new Error(
@@ -153,38 +210,45 @@ async function rawFetch(
         `Request failed (${response.status})`
       );
 
+
     error.status =
       response.status;
+
 
     error.body =
       body;
 
+
     throw error;
+
   }
 
+
   return body;
+
 }
 
 
 /* =========================================================
-   REFRESH ACCESS TOKEN
-   ========================================================= */
+   REFRESH TOKEN
+========================================================= */
 
-async function refreshAccessToken() {
+async function refreshAccessToken(){
 
-  if (!refreshToken)
+  if(!refreshToken)
     return false;
 
-  try {
+
+  try{
 
     const response =
       await fetch(
         API_BASE +
         "/api/auth/refresh",
         {
-          method: "POST",
+          method:"POST",
 
-          headers: {
+          headers:{
             "Content-Type":
               "application/json",
 
@@ -199,146 +263,182 @@ async function refreshAccessToken() {
         }
       );
 
+
     let body = null;
 
-    try {
+
+    try{
 
       body =
         await response.json();
 
-    } catch (_) {}
+    }catch(_){}
 
-    if (!response.ok) {
+
+    if(!response.ok){
 
       /*
-       * Only remove session when
-       * Render explicitly says token invalid.
+       * Only destroy the session when
+       * server explicitly says token invalid.
        */
 
-      if (
+      if(
         response.status === 401 ||
         response.status === 403
-      ) {
+      ){
 
         clearTokens();
+
       }
 
       return false;
+
     }
 
-    if (!body?.accessToken)
+
+    if(
+      !body ||
+      !body.accessToken
+    ){
+
       return false;
 
-    /*
-     * Keep existing refresh token.
-     */
+    }
+
+
     saveTokens(
       body.accessToken,
       refreshToken
     );
 
+
     return true;
 
-  } catch (error) {
+
+  }catch(error){
 
     /*
-     * NETWORK ERROR ≠ LOGOUT
+     * Network error is NOT logout.
      */
+
     console.warn(
-      "Temporary refresh failure:",
+      "Temporary refresh error:",
       error
     );
 
+
     return false;
+
   }
+
 }
 
 
 /* =========================================================
    API WRAPPER
-   ========================================================= */
+========================================================= */
 
 async function api(
   path,
   options = {},
   retry = true
-) {
+){
 
-  try {
+  try{
 
     return await rawFetch(
       path,
       options
     );
 
-  } catch (error) {
+  }catch(error){
 
-    if (
+    if(
       retry &&
       error.status === 401 &&
       refreshToken
-    ) {
+    ){
 
       const refreshed =
         await refreshAccessToken();
 
-      if (refreshed) {
+
+      if(refreshed){
 
         return api(
           path,
           options,
           false
         );
+
       }
+
     }
 
+
     throw error;
+
   }
+
 }
 
 
 /* =========================================================
    WEBSOCKET
-   ========================================================= */
+========================================================= */
 
-function closeSocket() {
+function closeSocket(){
 
-  if (socketRetryTimer) {
+  if(socketRetryTimer){
 
     clearTimeout(
       socketRetryTimer
     );
 
-    socketRetryTimer = null;
+    socketRetryTimer =
+      null;
+
   }
 
-  if (socket) {
 
-    try {
+  if(socket){
+
+    try{
+
       socket.close();
-    } catch (_) {}
+
+    }catch(_){}
+
   }
 
-  socket = null;
-  socketConnecting = false;
+
+  socket =
+    null;
+
+  socketConnecting =
+    false;
+
 }
 
 
-function scheduleSocketReconnect() {
+function scheduleSocketReconnect(){
 
-  if (
+  if(
     socketRetryTimer ||
     !accessToken
-  ) {
+  ){
 
     return;
+
   }
+
 
   socketRetryTimer =
     setTimeout(
-      () => {
+      function(){
 
-        socketRetryTimer = null;
+        socketRetryTimer =
+          null;
 
         connectSocket();
 
@@ -346,17 +446,19 @@ function scheduleSocketReconnect() {
       socketRetryMs
     );
 
+
   socketRetryMs =
     Math.min(
       socketRetryMs * 2,
       15000
     );
+
 }
 
 
-function connectSocket() {
+function connectSocket(){
 
-  if (
+  if(
     socketConnecting ||
     !accessToken ||
     (
@@ -369,12 +471,16 @@ function connectSocket() {
           WebSocket.CONNECTING
       )
     )
-  ) {
+  ){
 
     return;
+
   }
 
-  socketConnecting = true;
+
+  socketConnecting =
+    true;
+
 
   const wsBase =
     API_BASE
@@ -387,42 +493,57 @@ function connectSocket() {
         "ws:"
       );
 
-  try {
+
+  try{
 
     const ws =
       new WebSocket(
         wsBase + "/ws"
       );
 
-    socket = ws;
+
+    socket =
+      ws;
 
 
-    ws.onopen = () => {
+    ws.onopen =
+      function(){
 
-      socketConnecting = false;
+        socketConnecting =
+          false;
 
-      socketRetryMs = 1000;
 
-      try {
+        socketRetryMs =
+          1000;
+
 
         /*
-         * Authenticate first.
+         * IMPORTANT:
+         *
+         * Authentication first.
+         * Subscription only AFTER
+         * authenticated event.
          */
-        ws.send(
-          JSON.stringify({
-            type: "auth",
-            token: accessToken
-          })
-        );
 
-      } catch (_) {}
-    };
+        try{
+
+          ws.send(
+            JSON.stringify({
+              type:"auth",
+              token:
+                accessToken
+            })
+          );
+
+        }catch(_){}
+
+      };
 
 
     ws.onmessage =
-      event => {
+      function(event){
 
-        try {
+        try{
 
           const message =
             JSON.parse(
@@ -430,24 +551,29 @@ function connectSocket() {
             );
 
 
-          if (
+          /*
+           * Authentication completed.
+           */
+
+          if(
             message.event ===
               "authenticated"
-          ) {
+          ){
 
-            /*
-             * NOW subscribe.
-             */
-            try {
+            try{
 
               ws.send(
                 JSON.stringify({
-                  type: "subscribe",
-                  channels: ["all"]
+                  type:
+                    "subscribe",
+
+                  channels:[
+                    "all"
+                  ]
                 })
               );
 
-            } catch (_) {}
+            }catch(_){}
 
 
             window.dispatchEvent(
@@ -459,23 +585,31 @@ function connectSocket() {
                 }
               )
             );
+
           }
 
 
-          if (
+          /*
+           * Portal changed.
+           */
+
+          if(
             message.event ===
               "portal.updated" &&
             message.data
-          ) {
+          ){
 
             const row =
               message.data;
 
+
             const key =
               row.doc_key;
 
-            if (!key)
+
+            if(!key)
               return;
+
 
             versions.set(
               key,
@@ -484,114 +618,166 @@ function connectSocket() {
               )
             );
 
+
             const watcher =
               watchers.get(key);
 
-            if (watcher) {
+
+            if(watcher){
 
               const incoming =
                 row.data &&
                 typeof row.data ===
-                  "object" &&
-                Object.keys(
-                  row.data
-                ).length
+                  "object"
                   ? row.data
                   : null;
+
 
               watcher.success(
                 incoming
               );
+
             }
+
           }
 
 
-        } catch (error) {
+          /*
+           * Other realtime events.
+           */
+
+          window.dispatchEvent(
+            new CustomEvent(
+              "sonainfo-sync-event",
+              {
+                detail:
+                  message
+              }
+            )
+          );
+
+
+        }catch(error){
 
           console.error(
-            "Realtime error:",
+            "WebSocket message error:",
             error
           );
+
         }
+
       };
 
 
-    ws.onerror = () => {
-      /* reconnect handled by onclose */
-    };
+    ws.onerror =
+      function(){
+
+        /*
+         * onclose handles reconnect
+         */
+
+      };
 
 
-    ws.onclose = () => {
+    ws.onclose =
+      function(){
 
-      if (socket === ws)
-        socket = null;
+        if(socket === ws){
 
-      socketConnecting = false;
+          socket =
+            null;
 
-      if (accessToken)
-        scheduleSocketReconnect();
-    };
+        }
 
 
-  } catch (error) {
+        socketConnecting =
+          false;
 
-    socketConnecting = false;
+
+        if(accessToken){
+
+          scheduleSocketReconnect();
+
+        }
+
+      };
+
+
+  }catch(error){
+
+    socketConnecting =
+      false;
 
     scheduleSocketReconnect();
+
   }
+
 }
 
 
 /* =========================================================
-   AUTH CHECK
-   ========================================================= */
+   SESSION RESTORE
+========================================================= */
 
-async function notifyWho() {
+async function notifyWho(){
 
-  if (!whoCallback)
+  if(!whoCallback)
     return;
 
 
   /*
-   * No session.
+   * No saved session.
    */
 
-  if (
+  if(
     !accessToken &&
     !refreshToken
-  ) {
+  ){
 
     whoCallback(null);
 
     return;
+
   }
 
 
-  try {
+  try{
 
     const result =
       await api(
         "/api/auth/me"
       );
 
+
     const email =
       result?.user?.email ||
       null;
 
-    if (!email) {
+
+    if(!email){
 
       whoCallback(null);
 
       return;
+
     }
 
 
-    whoCallback(email);
+    localStorage.setItem(
+      "sonainfo_last_email",
+      email
+    );
+
+
+    whoCallback(
+      email
+    );
+
 
     connectSocket();
 
 
-  } catch (error) {
+  }catch(error){
 
     console.warn(
       "Session check:",
@@ -600,43 +786,56 @@ async function notifyWho() {
 
 
     /*
-     * IMPORTANT:
-     *
-     * Do NOT logout for network errors.
+     * Only logout on actual
+     * authentication failure.
      */
 
-    if (
+    if(
       error.status === 401 ||
       error.status === 403
-    ) {
-
-      /*
-       * Try refresh once.
-       */
+    ){
 
       const refreshed =
         await refreshAccessToken();
 
-      if (refreshed) {
 
-        try {
+      if(refreshed){
+
+        try{
 
           const result =
             await api(
               "/api/auth/me"
             );
 
+
           const email =
             result?.user?.email ||
             null;
 
-          whoCallback(email);
 
-          connectSocket();
+          if(email){
 
-          return;
+            localStorage.setItem(
+              "sonainfo_last_email",
+              email
+            );
 
-        } catch (_) {}
+
+            whoCallback(
+              email
+            );
+
+
+            connectSocket();
+
+
+            return;
+
+          }
+
+        }catch(_){}
+
       }
 
 
@@ -647,12 +846,13 @@ async function notifyWho() {
       whoCallback(null);
 
       return;
+
     }
 
 
     /*
-     * Temporary Render/network issue.
-     * Don't destroy login session.
+     * Network/server problem:
+     * DO NOT logout.
      */
 
     const savedEmail =
@@ -660,7 +860,8 @@ async function notifyWho() {
         "sonainfo_last_email"
       );
 
-    if (savedEmail) {
+
+    if(savedEmail){
 
       whoCallback(
         savedEmail
@@ -668,22 +869,25 @@ async function notifyWho() {
 
       connectSocket();
 
-    } else {
+    }else{
 
       whoCallback(null);
+
     }
+
   }
+
 }
 
 
 /* =========================================================
    LOGIN
-   ========================================================= */
+========================================================= */
 
 async function login(
   email,
   password
-) {
+){
 
   const normalizedEmail =
     String(email || "")
@@ -691,31 +895,29 @@ async function login(
       .toLowerCase();
 
 
-  if (
+  if(
     !normalizedEmail ||
     !password
-  ) {
+  ){
 
     const error =
       new Error(
         "Email and password are required."
       );
 
-    error.status = 400;
+    error.status =
+      400;
 
     throw error;
+
   }
 
-
-  /*
-   * NORMAL LOGIN
-   */
 
   const result =
     await api(
       "/api/auth/login",
       {
-        method: "POST",
+        method:"POST",
 
         body:
           JSON.stringify({
@@ -729,20 +931,18 @@ async function login(
     );
 
 
-  if (
-    !result?.accessToken ||
-    !result?.refreshToken
-  ) {
+  if(
+    !result ||
+    !result.accessToken ||
+    !result.refreshToken
+  ){
 
     throw new Error(
       "Invalid login response from server."
     );
+
   }
 
-
-  /*
-   * Save session.
-   */
 
   saveTokens(
     result.accessToken,
@@ -756,25 +956,20 @@ async function login(
   );
 
 
-  /*
-   * Start realtime.
-   */
-
   connectSocket();
 
 
   /*
-   * Tell app.js that login succeeded.
-   *
-   * app.js will then load all portal
-   * documents through watchAll().
+   * app.js will continue its
+   * existing watchAll() flow.
    */
 
-  if (whoCallback) {
+  if(whoCallback){
 
     whoCallback(
       normalizedEmail
     );
+
   }
 
 
@@ -782,45 +977,49 @@ async function login(
     new CustomEvent(
       "sonainfo-login",
       {
-        detail: result.user
+        detail:
+          result.user
       }
     )
   );
 
 
   return result;
+
 }
 
 
 /* =========================================================
    LOGOUT
-   ========================================================= */
+========================================================= */
 
-async function logout() {
+async function logout(){
 
   const oldRefresh =
     refreshToken;
 
+
   clearTokens();
 
   closeSocket();
+
 
   localStorage.removeItem(
     "sonainfo_last_email"
   );
 
 
-  try {
+  try{
 
-    if (oldRefresh) {
+    if(oldRefresh){
 
       await fetch(
         API_BASE +
-          "/api/auth/logout",
+        "/api/auth/logout",
         {
-          method: "POST",
+          method:"POST",
 
-          headers: {
+          headers:{
             "Content-Type":
               "application/json",
 
@@ -835,21 +1034,26 @@ async function logout() {
             })
         }
       );
+
     }
 
-  } catch (_) {}
+  }catch(_){}
 
 
-  if (whoCallback)
+  if(whoCallback){
+
     whoCallback(null);
+
+  }
+
 }
 
 
 /* =========================================================
    WHO
-   ========================================================= */
+========================================================= */
 
-function who(callback) {
+function who(callback){
 
   whoCallback =
     typeof callback ===
@@ -857,31 +1061,35 @@ function who(callback) {
       ? callback
       : null;
 
+
   notifyWho();
+
 }
 
 
 /* =========================================================
-   REGISTER
-   ========================================================= */
+   CREATE USER
+========================================================= */
 
 async function create(
   email,
   password
-) {
+){
 
   const normalizedEmail =
     String(email || "")
       .trim()
       .toLowerCase();
 
+
   return api(
     "/api/auth/register",
     {
-      method: "POST",
+      method:"POST",
 
       body:
         JSON.stringify({
+
           email:
             normalizedEmail,
 
@@ -899,38 +1107,43 @@ async function create(
 
           permissions:
             []
+
         })
     },
     false
   );
+
 }
 
 
 /* =========================================================
    PASSWORD RESET
-   ========================================================= */
+========================================================= */
 
-async function reset(email) {
+async function reset(){
 
   const error =
     new Error(
-      "Password reset is not configured on the backend yet."
+      "Password reset email is not configured on the backend."
     );
+
 
   error.code =
     "PASSWORD_RESET_NOT_CONFIGURED";
 
+
   throw error;
+
 }
 
 
 /* =========================================================
-   PORTAL DOCUMENTS
-   ========================================================= */
+   PORTAL WATCH
+========================================================= */
 
 async function loadDocument(
   key
-) {
+){
 
   const row =
     await api(
@@ -947,21 +1160,20 @@ async function loadDocument(
   );
 
 
-  if (
+  if(
     !row ||
     !row.data ||
     typeof row.data !==
-      "object" ||
-    !Object.keys(
-      row.data
-    ).length
-  ) {
+      "object"
+  ){
 
     return null;
+
   }
 
 
   return row.data;
+
 }
 
 
@@ -969,7 +1181,7 @@ function watch(
   key,
   success,
   error
-) {
+){
 
   const watcher = {
 
@@ -977,13 +1189,14 @@ function watch(
       typeof success ===
         "function"
         ? success
-        : () => {},
+        : function(){},
 
     error:
       typeof error ===
         "function"
         ? error
-        : () => {}
+        : function(){}
+
   };
 
 
@@ -995,61 +1208,75 @@ function watch(
 
   loadDocument(key)
 
-    .then(data => {
+    .then(
+      function(data){
 
-      if (
-        watchers.get(key) ===
-        watcher
-      ) {
+        if(
+          watchers.get(key) ===
+          watcher
+        ){
 
-        watcher.success(data);
+          watcher.success(
+            data
+          );
+
+        }
+
       }
+    )
 
-    })
+    .catch(
+      function(err){
 
-    .catch(error => {
+        if(
+          watchers.get(key) ===
+          watcher
+        ){
 
-      if (
-        watchers.get(key) ===
-        watcher
-      ) {
+          watcher.error(
+            err
+          );
 
-        watcher.error(error);
+        }
+
       }
-    });
+    );
 
 
   connectSocket();
 
 
-  return () => {
+  return function(){
 
-    if (
+    if(
       watchers.get(key) ===
       watcher
-    ) {
+    ){
 
       watchers.delete(key);
+
     }
+
   };
+
 }
 
 
 /* =========================================================
-   SAVE
-   ========================================================= */
+   PORTAL SAVE
+========================================================= */
 
 async function set(
   key,
   data
-) {
+){
 
   const result =
     await api(
       "/api/portal/" +
       encodeURIComponent(key),
       {
-        method: "PUT",
+        method:"PUT",
 
         body:
           JSON.stringify({
@@ -1071,31 +1298,34 @@ async function set(
     watchers.get(key);
 
 
-  if (
+  if(
     watcher &&
     (
       !socket ||
       socket.readyState !==
         WebSocket.OPEN
     )
-  ) {
+  ){
 
     watcher.success(
       result?.data ||
       data
     );
+
   }
 
 
   connectSocket();
 
+
   return result;
+
 }
 
 
 /* =========================================================
-   PUBLIC API
-   ========================================================= */
+   PUBLIC SYNC OBJECT
+========================================================= */
 
 window.SYNC = {
 
@@ -1112,19 +1342,16 @@ window.SYNC = {
   reset,
 
   create
+
 };
 
 
-/*
- * IMPORTANT:
- * app.js is loaded after this file.
- */
-
-window.__syncReady = true;
+window.__syncReady =
+  true;
 
 
 /*
- * Tell app.js to boot.
+ * app.js waits for this event.
  */
 
 window.dispatchEvent(
@@ -1134,13 +1361,13 @@ window.dispatchEvent(
 );
 
 
-/*
- * Browser network state.
- */
+/* =========================================================
+   NETWORK EVENTS
+========================================================= */
 
 window.addEventListener(
   "online",
-  () => {
+  function(){
 
     window.dispatchEvent(
       new Event(
@@ -1148,20 +1375,26 @@ window.addEventListener(
       )
     );
 
-    if (accessToken)
+
+    if(accessToken){
+
       connectSocket();
+
+    }
+
   }
 );
 
 
 window.addEventListener(
   "offline",
-  () => {
+  function(){
 
     window.dispatchEvent(
       new Event(
         "sync-offline"
       )
     );
+
   }
 );
