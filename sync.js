@@ -1,451 +1,281 @@
 /* =========================================================
-   SONAlNFO - RENDER BACKEND SYNC
-   Firebase-free realtime sync
-   Backend:
-   https://sonainfo-backend-2.onrender.com
+   SONAINFO EXECUTIVE PORTAL
+   FIREBASE-FREE SYNC
+   Render API + PostgreSQL + WebSocket
    ========================================================= */
 
-(() => {
-  "use strict";
+const API_BASE =
+  "https://sonainfo-backend-2.onrender.com";
 
-  /* =========================================================
-     CONFIG
-     ========================================================= */
+const ACCESS_KEY =
+  "sonainfo_access_token";
 
-  const API_BASE =
-    "https://sonainfo-backend-2.onrender.com";
+const REFRESH_KEY =
+  "sonainfo_refresh_token";
 
-  const WS_URL =
-    "wss://sonainfo-backend-2.onrender.com/ws";
+let accessToken =
+  localStorage.getItem(ACCESS_KEY) || "";
 
-  const ACCESS_KEY =
-    "sonainfo_access_token";
+let refreshToken =
+  localStorage.getItem(REFRESH_KEY) || "";
 
-  const REFRESH_KEY =
-    "sonainfo_refresh_token";
+let whoCallback = null;
 
-  const USER_KEY =
-    "sonainfo_current_user";
+let socket = null;
+let socketRetryTimer = null;
+let socketRetryMs = 1000;
+let socketConnecting = false;
 
-  const DOC_KEY =
-    "main";
-
-  const REQUEST_TIMEOUT =
-    15000;
-
-  const WS_RECONNECT_MIN =
-    1000;
-
-  const WS_RECONNECT_MAX =
-    15000;
+const watchers = new Map();
+const versions = new Map();
 
 
-  /* =========================================================
-     INTERNAL STATE
-     ========================================================= */
+/* =========================================================
+   TOKEN MANAGEMENT
+   ========================================================= */
 
-  let accessToken =
-    localStorage.getItem(ACCESS_KEY) || "";
+function saveTokens(access, refresh) {
 
-  let refreshToken =
-    localStorage.getItem(REFRESH_KEY) || "";
+  accessToken = access || "";
 
-  let currentUser = null;
+  if (refresh !== undefined)
+    refreshToken = refresh || "";
 
-  try {
-    const savedUser =
-      localStorage.getItem(USER_KEY);
-
-    if (savedUser) {
-      currentUser =
-        JSON.parse(savedUser);
-    }
-  } catch (e) {
-    currentUser = null;
-  }
-
-  let socket = null;
-
-  let socketTimer = null;
-
-  let socketDelay =
-    WS_RECONNECT_MIN;
-
-  let socketManuallyClosed =
-    false;
-
-  let whoCallback = null;
-
-  let ready = false;
-
-  let refreshing = null;
-
-  let watchers = new Map();
-
-  let lastServerVersion = 0;
-
-  let isSaving = false;
-
-  let pendingSave = null;
-
-
-  /* =========================================================
-     STORAGE
-     ========================================================= */
-
-  function saveTokens(access, refresh) {
-
-    accessToken =
-      access || "";
-
-    refreshToken =
-      refresh || "";
-
-    if (accessToken) {
-      localStorage.setItem(
-        ACCESS_KEY,
-        accessToken
-      );
-    } else {
-      localStorage.removeItem(
-        ACCESS_KEY
-      );
-    }
-
-    if (refreshToken) {
-      localStorage.setItem(
-        REFRESH_KEY,
-        refreshToken
-      );
-    } else {
-      localStorage.removeItem(
-        REFRESH_KEY
-      );
-    }
-  }
-
-
-  function saveUser(user) {
-
-    currentUser =
-      user || null;
-
-    if (currentUser) {
-
-      localStorage.setItem(
-        USER_KEY,
-        JSON.stringify(currentUser)
-      );
-
-    } else {
-
-      localStorage.removeItem(
-        USER_KEY
-      );
-
-    }
-  }
-
-
-  function clearTokens() {
-
-    accessToken = "";
-    refreshToken = "";
-    currentUser = null;
-
+  if (accessToken)
+    localStorage.setItem(
+      ACCESS_KEY,
+      accessToken
+    );
+  else
     localStorage.removeItem(
       ACCESS_KEY
     );
 
+  /*
+   * IMPORTANT:
+   * Render refresh endpoint does NOT return
+   * another refresh token.
+   *
+   * Therefore we keep the old one.
+   */
+  if (refreshToken)
+    localStorage.setItem(
+      REFRESH_KEY,
+      refreshToken
+    );
+  else
     localStorage.removeItem(
       REFRESH_KEY
     );
+}
 
-    localStorage.removeItem(
-      USER_KEY
+
+function clearTokens() {
+
+  accessToken = "";
+  refreshToken = "";
+
+  localStorage.removeItem(
+    ACCESS_KEY
+  );
+
+  localStorage.removeItem(
+    REFRESH_KEY
+  );
+}
+
+
+/* =========================================================
+   HTTP
+   ========================================================= */
+
+async function rawFetch(
+  path,
+  options = {}
+) {
+
+  const headers =
+    new Headers(
+      options.headers || {}
     );
-  }
 
+  headers.set(
+    "Accept",
+    "application/json"
+  );
 
-  /* =========================================================
-     HELPERS
-     ========================================================= */
-
-  function sleep(ms) {
-    return new Promise(resolve =>
-      setTimeout(resolve, ms)
-    );
-  }
-
-
-  function isNetworkError(error) {
-
-    if (!error) {
-      return false;
-    }
-
-    const msg =
-      String(error.message || "")
-        .toLowerCase();
-
-    return (
-      msg.includes("network") ||
-      msg.includes("failed to fetch") ||
-      msg.includes("timeout") ||
-      msg.includes("load failed") ||
-      msg.includes("fetch")
-    );
-  }
-
-
-  function dispatch(name, detail) {
-
-    try {
-
-      window.dispatchEvent(
-        new CustomEvent(
-          name,
-          { detail }
-        )
-      );
-
-    } catch (e) {
-
-      try {
-
-        const event =
-          document.createEvent(
-            "CustomEvent"
-          );
-
-        event.initCustomEvent(
-          name,
-          false,
-          false,
-          detail
-        );
-
-        window.dispatchEvent(event);
-
-      } catch (_) {}
-    }
-  }
-
-
-  /* =========================================================
-     FETCH WITH TIMEOUT
-     ========================================================= */
-
-  async function fetchWithTimeout(
-    url,
-    options = {},
-    timeout = REQUEST_TIMEOUT
+  if (
+    options.body &&
+    !(options.body instanceof FormData) &&
+    !headers.has("Content-Type")
   ) {
 
-    const controller =
-      new AbortController();
-
-    const timer =
-      setTimeout(
-        () => controller.abort(),
-        timeout
-      );
-
-    try {
-
-      const response =
-        await fetch(
-          url,
-          {
-            ...options,
-            signal:
-              controller.signal
-          }
-        );
-
-      return response;
-
-    } finally {
-
-      clearTimeout(timer);
-
-    }
+    headers.set(
+      "Content-Type",
+      "application/json"
+    );
   }
 
+  if (accessToken) {
 
-  /* =========================================================
-     REFRESH ACCESS TOKEN
-     ========================================================= */
+    headers.set(
+      "Authorization",
+      "Bearer " + accessToken
+    );
+  }
 
-  async function refreshAccessToken() {
+  const response =
+    await fetch(
+      API_BASE + path,
+      {
+        ...options,
+        headers
+      }
+    );
 
-    if (!refreshToken) {
-      return false;
-    }
+  let body = null;
 
-    if (refreshing) {
-      return refreshing;
-    }
+  try {
 
-    refreshing =
-      (async () => {
+    body =
+      await response.json();
 
-        try {
+  } catch (_) {
 
-          const response =
-            await fetchWithTimeout(
-              `${API_BASE}/api/auth/refresh`,
-              {
-                method: "POST",
+    body = null;
+  }
 
-                headers: {
-                  "Content-Type":
-                    "application/json"
-                },
+  if (!response.ok) {
 
-                body: JSON.stringify({
-                  refreshToken
-                })
-              }
-            );
+    const error =
+      new Error(
+        body?.error ||
+        `Request failed (${response.status})`
+      );
 
-          if (!response.ok) {
+    error.status =
+      response.status;
 
-            /*
-             * Only 401/403 means the
-             * refresh session is actually
-             * invalid.
-             *
-             * Network/server errors should
-             * NOT log the user out.
-             */
+    error.body =
+      body;
 
-            if (
-              response.status === 401 ||
-              response.status === 403
-            ) {
+    throw error;
+  }
 
-              clearTokens();
+  return body;
+}
 
-              return false;
 
-            }
+/* =========================================================
+   REFRESH ACCESS TOKEN
+   ========================================================= */
 
-            return false;
-          }
+async function refreshAccessToken() {
 
-          const data =
-            await response.json();
+  if (!refreshToken)
+    return false;
 
-          if (!data.accessToken) {
-            return false;
-          }
+  try {
 
-          saveTokens(
-            data.accessToken,
-            refreshToken
-          );
+    const response =
+      await fetch(
+        API_BASE +
+        "/api/auth/refresh",
+        {
+          method: "POST",
 
-          if (data.user) {
-            saveUser(data.user);
-          }
+          headers: {
+            "Content-Type":
+              "application/json",
 
-          dispatch(
-            "sync-token-refreshed",
-            data
-          );
+            "Accept":
+              "application/json"
+          },
 
-          return true;
-
-        } catch (error) {
-
-          console.warn(
-            "Token refresh failed temporarily:",
-            error
-          );
-
-          /*
-           * IMPORTANT:
-           * Do NOT delete tokens here.
-           */
-
-          return false;
-
-        } finally {
-
-          refreshing = null;
-
+          body:
+            JSON.stringify({
+              refreshToken
+            })
         }
+      );
 
-      })();
-
-    return refreshing;
-  }
-
-
-  /* =========================================================
-     API REQUEST
-     ========================================================= */
-
-  async function api(
-    path,
-    options = {},
-    retry = true
-  ) {
-
-    const headers = {
-      ...(options.headers || {})
-    };
-
-    if (
-      options.body &&
-      !(options.body instanceof FormData)
-    ) {
-
-      headers["Content-Type"] =
-        headers["Content-Type"] ||
-        "application/json";
-
-    }
-
-    if (accessToken) {
-
-      headers.Authorization =
-        `Bearer ${accessToken}`;
-
-    }
-
-    let response;
+    let body = null;
 
     try {
 
-      response =
-        await fetchWithTimeout(
-          `${API_BASE}${path}`,
-          {
-            ...options,
-            headers
-          }
-        );
+      body =
+        await response.json();
 
-    } catch (error) {
+    } catch (_) {}
+
+    if (!response.ok) {
 
       /*
-       * Network failure.
-       * NEVER logout here.
+       * Only remove session when
+       * Render explicitly says token invalid.
        */
 
-      throw error;
+      if (
+        response.status === 401 ||
+        response.status === 403
+      ) {
+
+        clearTokens();
+      }
+
+      return false;
     }
 
+    if (!body?.accessToken)
+      return false;
 
-    /* -------------------------------------------------------
-       ACCESS TOKEN EXPIRED
-       ------------------------------------------------------- */
+    /*
+     * Keep existing refresh token.
+     */
+    saveTokens(
+      body.accessToken,
+      refreshToken
+    );
+
+    return true;
+
+  } catch (error) {
+
+    /*
+     * NETWORK ERROR ≠ LOGOUT
+     */
+    console.warn(
+      "Temporary refresh failure:",
+      error
+    );
+
+    return false;
+  }
+}
+
+
+/* =========================================================
+   API WRAPPER
+   ========================================================= */
+
+async function api(
+  path,
+  options = {},
+  retry = true
+) {
+
+  try {
+
+    return await rawFetch(
+      path,
+      options
+    );
+
+  } catch (error) {
 
     if (
-      response.status === 401 &&
       retry &&
+      error.status === 401 &&
       refreshToken
     ) {
 
@@ -459,786 +289,77 @@
           options,
           false
         );
-
       }
     }
 
+    throw error;
+  }
+}
 
-    /* -------------------------------------------------------
-       RESPONSE
-       ------------------------------------------------------- */
 
-    let data = null;
+/* =========================================================
+   WEBSOCKET
+   ========================================================= */
 
-    const contentType =
-      response.headers.get(
-        "content-type"
-      ) || "";
+function closeSocket() {
+
+  if (socketRetryTimer) {
+
+    clearTimeout(
+      socketRetryTimer
+    );
+
+    socketRetryTimer = null;
+  }
+
+  if (socket) {
 
     try {
-
-      if (
-        contentType.includes(
-          "application/json"
-        )
-      ) {
-
-        data =
-          await response.json();
-
-      } else {
-
-        data =
-          await response.text();
-
-      }
-
-    } catch (_) {
-
-      data = null;
-
-    }
-
-
-    if (!response.ok) {
-
-      const message =
-        data?.error ||
-        data?.message ||
-        `Request failed (${response.status})`;
-
-      const error =
-        new Error(message);
-
-      error.status =
-        response.status;
-
-      error.data =
-        data;
-
-      throw error;
-    }
-
-    return data;
+      socket.close();
+    } catch (_) {}
   }
 
-
-  /* =========================================================
-     CURRENT USER
-     ========================================================= */
-
-  async function getMe() {
-
-    if (!accessToken && !refreshToken) {
-      return null;
-    }
-
-    try {
-
-      const data =
-        await api(
-          "/api/auth/me"
-        );
-
-      if (data?.user) {
-
-        saveUser(
-          data.user
-        );
-
-        return data.user;
-
-      }
-
-      return null;
-
-    } catch (error) {
-
-      /*
-       * Access token expired:
-       * api() already tried refresh.
-       */
-
-      if (
-        error.status === 401 &&
-        refreshToken
-      ) {
-
-        const refreshed =
-          await refreshAccessToken();
-
-        if (refreshed) {
-
-          try {
-
-            const data =
-              await api(
-                "/api/auth/me",
-                {},
-                false
-              );
-
-            if (data?.user) {
-
-              saveUser(
-                data.user
-              );
-
-              return data.user;
-
-            }
-
-          } catch (_) {}
-
-        }
-
-      }
-
-      /*
-       * IMPORTANT:
-       *
-       * Do NOT logout the user for
-       * temporary network/server errors.
-       */
-
-      if (
-        isNetworkError(error) ||
-        !error.status ||
-        error.status >= 500
-      ) {
-
-        console.warn(
-          "Backend temporarily unavailable. Keeping login session.",
-          error
-        );
-
-        return currentUser;
-      }
-
-      /*
-       * Only genuine authentication
-       * failure clears the session.
-       */
-
-      if (
-        error.status === 401 ||
-        error.status === 403
-      ) {
-
-        clearTokens();
-        closeSocket();
-
-        return null;
-      }
-
-      return currentUser;
-    }
-  }
+  socket = null;
+  socketConnecting = false;
+}
 
 
-  /* =========================================================
-     WHO
-     ========================================================= */
+function scheduleSocketReconnect() {
 
-  async function notifyWho() {
-
-    if (!whoCallback) {
-      return;
-    }
-
-    /*
-     * No saved session.
-     */
-
-    if (
-      !accessToken &&
-      !refreshToken
-    ) {
-
-      whoCallback(null);
-
-      return;
-    }
-
-
-    /*
-     * We have a token.
-     */
-
-    const user =
-      await getMe();
-
-    if (user) {
-
-      whoCallback(
-        user.email || null
-      );
-
-      connectSocket();
-
-      return;
-    }
-
-
-    /*
-     * If backend is temporarily
-     * unavailable but local user exists,
-     * keep the UI logged in.
-     */
-
-    if (currentUser) {
-
-      whoCallback(
-        currentUser.email || null
-      );
-
-      connectSocket();
-
-      return;
-    }
-
-    whoCallback(null);
-  }
-
-
-  /* =========================================================
-     LOGIN
-     ========================================================= */
-
-  async function login(
-    email,
-    password
+  if (
+    socketRetryTimer ||
+    !accessToken
   ) {
 
-    if (!email || !password) {
+    return;
+  }
 
-      throw new Error(
-        "Email and password are required."
-      );
+  socketRetryTimer =
+    setTimeout(
+      () => {
 
-    }
+        socketRetryTimer = null;
 
-    const data =
-      await api(
-        "/api/auth/login",
-        {
-          method: "POST",
+        connectSocket();
 
-          body: JSON.stringify({
-            email:
-              String(email)
-                .trim()
-                .toLowerCase(),
-
-            password:
-              String(password)
-          })
-        },
-        false
-      );
-
-
-    if (
-      !data?.accessToken ||
-      !data?.refreshToken
-    ) {
-
-      throw new Error(
-        "Login response is invalid."
-      );
-
-    }
-
-
-    saveTokens(
-      data.accessToken,
-      data.refreshToken
+      },
+      socketRetryMs
     );
 
-    if (data.user) {
-
-      saveUser(
-        data.user
-      );
-
-    }
-
-
-    dispatch(
-      "sync-login",
-      data.user || null
+  socketRetryMs =
+    Math.min(
+      socketRetryMs * 2,
+      15000
     );
+}
 
 
-    connectSocket();
+function connectSocket() {
 
-    /*
-     * app.js expects SYNC.login()
-     * to finish the authentication flow.
-     */
-
-    if (whoCallback) {
-
-      whoCallback(
-        data.user?.email || email
-      );
-
-    }
-
-    return data;
-  }
-
-
-  /* =========================================================
-     LOGOUT
-     ========================================================= */
-
-  async function logout() {
-
-    const token =
-      refreshToken;
-
-    /*
-     * Clear local session immediately
-     * so UI logs out even if backend
-     * is temporarily unavailable.
-     */
-
-    clearTokens();
-
-    closeSocket();
-
-    dispatch(
-      "sync-logout"
-    );
-
-    if (!token) {
-      return;
-    }
-
-    try {
-
-      await fetchWithTimeout(
-        `${API_BASE}/api/auth/logout`,
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json"
-          },
-
-          body: JSON.stringify({
-            refreshToken: token
-          })
-        }
-      );
-
-    } catch (error) {
-
-      /*
-       * Backend logout failure does not
-       * matter because local session is
-       * already removed.
-       */
-
-      console.warn(
-        "Backend logout request failed:",
-        error
-      );
-
-    }
-  }
-
-
-  /* =========================================================
-     PASSWORD RESET
-     ========================================================= */
-
-  async function reset(email) {
-
-    /*
-     * Current backend does not expose
-     * a password-reset/email endpoint.
-     */
-
-    throw new Error(
-      "Password reset is not configured on the backend yet. Please contact the SEC Committee."
-    );
-  }
-
-
-  /* =========================================================
-     CREATE USER
-     ========================================================= */
-
-  async function create(
-    email,
-    password,
-    extra = {}
-  ) {
-
-    if (!email || !password) {
-
-      throw new Error(
-        "Email and password are required."
-      );
-
-    }
-
-    const data =
-      await api(
-        "/api/auth/register",
-        {
-          method: "POST",
-
-          body: JSON.stringify({
-            email:
-              String(email)
-                .trim()
-                .toLowerCase(),
-
-            password:
-              String(password),
-
-            name:
-              extra.name ||
-              String(email)
-                .split("@")[0],
-
-            role:
-              extra.role ||
-              "member",
-
-            office:
-              extra.office ||
-              null,
-
-            permissions:
-              Array.isArray(
-                extra.permissions
-              )
-                ? extra.permissions
-                : []
-          })
-        }
-      );
-
-    return data;
-  }
-
-
-  /* =========================================================
-     PORTAL DOCUMENT
-     ========================================================= */
-
-  async function loadPortal(
-    key = DOC_KEY
-  ) {
-
-    const data =
-      await api(
-        `/api/portal/${encodeURIComponent(key)}`
-      );
-
-    if (
-      data &&
-      typeof data.version !== "undefined"
-    ) {
-
-      lastServerVersion =
-        Number(data.version) || 0;
-
-    }
-
-    return data?.data ?? {};
-  }
-
-
-  /* =========================================================
-     WATCH
-     ========================================================= */
-
-  function watch(
-    key,
-    success,
-    error
-  ) {
-
-    const docKey =
-      key || DOC_KEY;
-
-    watchers.set(
-      docKey,
-      {
-        success,
-        error
-      }
-    );
-
-
-    /*
-     * First load from PostgreSQL.
-     */
-
-    (async () => {
-
-      try {
-
-        const data =
-          await api(
-            `/api/portal/${encodeURIComponent(docKey)}`
-          );
-
-        if (
-          data &&
-          typeof data.version !== "undefined"
-        ) {
-
-          lastServerVersion =
-            Number(data.version) || 0;
-
-        }
-
-        if (typeof success === "function") {
-
-          success(
-            data?.data ?? {}
-          );
-
-        }
-
-      } catch (e) {
-
-        console.error(
-          "Portal load failed:",
-          e
-        );
-
-        /*
-         * Do not immediately destroy
-         * the application session.
-         */
-
-        if (typeof error === "function") {
-          error(e);
-        }
-
-      }
-
-    })();
-
-
-    /*
-     * Return unsubscribe function.
-     */
-
-    return () => {
-
-      watchers.delete(
-        docKey
-      );
-
-    };
-  }
-
-
-  /* =========================================================
-     SET / SAVE PORTAL
-     ========================================================= */
-
-  async function set(
-    key,
-    data
-  ) {
-
-    const docKey =
-      key || DOC_KEY;
-
-    /*
-     * If another save is already running,
-     * remember the newest state.
-     */
-
-    if (isSaving) {
-
-      pendingSave = {
-        key: docKey,
-        data
-      };
-
-      return;
-    }
-
-    isSaving = true;
-
-    try {
-
-      const payload = {
-        data
-      };
-
-      /*
-       * Use optimistic version only when
-       * we know the server version.
-       */
-
-      if (lastServerVersion > 0) {
-
-        payload.expectedVersion =
-          lastServerVersion;
-
-      }
-
-      let result;
-
-      try {
-
-        result =
-          await api(
-            `/api/portal/${encodeURIComponent(docKey)}`,
-            {
-              method: "PUT",
-              body:
-                JSON.stringify(payload)
-            }
-          );
-
-      } catch (error) {
-
-        /*
-         * Version conflict:
-         * fetch latest state and report it.
-         */
-
-        if (error.status === 409) {
-
-          console.warn(
-            "Portal version conflict. Reloading latest server state."
-          );
-
-          try {
-
-            const latest =
-              await api(
-                `/api/portal/${encodeURIComponent(docKey)}`
-              );
-
-            lastServerVersion =
-              Number(
-                latest.version || 0
-              );
-
-            const watcher =
-              watchers.get(docKey);
-
-            if (
-              watcher &&
-              typeof watcher.success ===
-                "function"
-            ) {
-
-              watcher.success(
-                latest.data || {}
-              );
-
-            }
-
-          } catch (reloadError) {
-
-            console.error(
-              "Failed to reload latest portal data:",
-              reloadError
-            );
-
-          }
-
-        }
-
-        throw error;
-      }
-
-
-      if (
-        result &&
-        typeof result.version !==
-          "undefined"
-      ) {
-
-        lastServerVersion =
-          Number(
-            result.version
-          ) || lastServerVersion;
-
-      }
-
-
-      /*
-       * Server broadcasts the WebSocket
-       * event to all connected devices.
-       */
-
-      return result;
-
-    } finally {
-
-      isSaving = false;
-
-      /*
-       * If a newer save happened while
-       * the previous request was running,
-       * send the newest state now.
-       */
-
-      if (pendingSave) {
-
-        const next =
-          pendingSave;
-
-        pendingSave = null;
-
-        setTimeout(
-          () => {
-
-            set(
-              next.key,
-              next.data
-            ).catch(error =>
-              console.error(
-                "Pending save failed:",
-                error
-              )
-            );
-
-          },
-          0
-        );
-      }
-    }
-  }
-
-
-  /* =========================================================
-     WEBSOCKET
-     ========================================================= */
-
-  function connectSocket() {
-
-    if (
-      socketManuallyClosed
-    ) {
-
-      return;
-    }
-
-    if (
-      !accessToken
-    ) {
-
-      return;
-    }
-
-    if (
+  if (
+    socketConnecting ||
+    !accessToken ||
+    (
       socket &&
       (
         socket.readyState ===
@@ -1247,526 +368,800 @@
         socket.readyState ===
           WebSocket.CONNECTING
       )
-    ) {
+    )
+  ) {
 
-      return;
-    }
+    return;
+  }
+
+  socketConnecting = true;
+
+  const wsBase =
+    API_BASE
+      .replace(
+        /^https:/,
+        "wss:"
+      )
+      .replace(
+        /^http:/,
+        "ws:"
+      );
+
+  try {
+
+    const ws =
+      new WebSocket(
+        wsBase + "/ws"
+      );
+
+    socket = ws;
 
 
-    clearTimeout(
-      socketTimer
-    );
+    ws.onopen = () => {
 
+      socketConnecting = false;
 
-    try {
+      socketRetryMs = 1000;
 
-      socket =
-        new WebSocket(
-          WS_URL
-        );
-
-    } catch (error) {
-
-      scheduleSocketReconnect();
-
-      return;
-    }
-
-
-    socket.onopen =
-      () => {
-
-        socketDelay =
-          WS_RECONNECT_MIN;
-
+      try {
 
         /*
-         * Authenticate WebSocket.
+         * Authenticate first.
          */
+        ws.send(
+          JSON.stringify({
+            type: "auth",
+            token: accessToken
+          })
+        );
 
-        if (accessToken) {
-
-          socket.send(
-            JSON.stringify({
-              type: "auth",
-              token:
-                accessToken
-            })
-          );
-
-        }
-
-      };
+      } catch (_) {}
+    };
 
 
-    socket.onmessage =
-      async event => {
-
-        let message;
+    ws.onmessage =
+      event => {
 
         try {
 
-          message =
+          const message =
             JSON.parse(
               event.data
             );
 
-        } catch (_) {
-
-          return;
-        }
-
-
-        const eventName =
-          message.event;
-
-        const data =
-          message.data;
-
-
-        /*
-         * Authentication successful
-         */
-
-        if (
-          eventName ===
-          "authenticated"
-        ) {
-
-          socket.send(
-            JSON.stringify({
-              type:
-                "subscribe",
-
-              channels:
-                ["all"]
-            })
-          );
-
-          dispatch(
-            "sync-connected",
-            data
-          );
-
-          return;
-        }
-
-
-        /*
-         * WebSocket error
-         */
-
-        if (
-          eventName ===
-          "error"
-        ) {
-
-          console.warn(
-            "WebSocket error:",
-            data
-          );
-
-          return;
-        }
-
-
-        /*
-         * PORTAL UPDATED
-         *
-         * This is the most important
-         * event for your current portal.
-         */
-
-        if (
-          eventName ===
-          "portal.updated"
-        ) {
-
-          const doc =
-            data;
-
-          if (!doc) {
-            return;
-          }
-
-
-          const docKey =
-            doc.doc_key ||
-            doc.docKey ||
-            DOC_KEY;
-
 
           if (
-            typeof doc.version !==
-              "undefined"
+            message.event ===
+              "authenticated"
           ) {
 
-            lastServerVersion =
-              Math.max(
-                lastServerVersion,
-                Number(
-                  doc.version
-                ) || 0
+            /*
+             * NOW subscribe.
+             */
+            try {
+
+              ws.send(
+                JSON.stringify({
+                  type: "subscribe",
+                  channels: ["all"]
+                })
               );
 
-          }
+            } catch (_) {}
 
 
-          const watcher =
-            watchers.get(
-              docKey
+            window.dispatchEvent(
+              new CustomEvent(
+                "sonainfo-authenticated",
+                {
+                  detail:
+                    message.data?.user
+                }
+              )
             );
+          }
 
 
           if (
-            watcher &&
-            typeof watcher.success ===
-              "function"
+            message.event ===
+              "portal.updated" &&
+            message.data
           ) {
 
-            watcher.success(
-              doc.data || {}
+            const row =
+              message.data;
+
+            const key =
+              row.doc_key;
+
+            if (!key)
+              return;
+
+            versions.set(
+              key,
+              Number(
+                row.version || 0
+              )
             );
 
+            const watcher =
+              watchers.get(key);
+
+            if (watcher) {
+
+              const incoming =
+                row.data &&
+                typeof row.data ===
+                  "object" &&
+                Object.keys(
+                  row.data
+                ).length
+                  ? row.data
+                  : null;
+
+              watcher.success(
+                incoming
+              );
+            }
           }
 
 
-          /*
-           * Also dispatch a general
-           * event so app.js can react
-           * if needed.
-           */
+        } catch (error) {
 
-          dispatch(
-            "portal-updated",
-            doc
+          console.error(
+            "Realtime error:",
+            error
           );
-
-          return;
         }
-
-
-        /*
-         * Other realtime events
-         */
-
-        dispatch(
-          "sync-event",
-          {
-            event:
-              eventName,
-
-            data
-          }
-        );
-
       };
 
 
-    socket.onclose =
-      event => {
+    ws.onerror = () => {
+      /* reconnect handled by onclose */
+    };
 
+
+    ws.onclose = () => {
+
+      if (socket === ws)
         socket = null;
 
-        dispatch(
-          "sync-disconnected",
-          event
-        );
+      socketConnecting = false;
+
+      if (accessToken)
+        scheduleSocketReconnect();
+    };
 
 
-        /*
-         * If we still have login tokens,
-         * reconnect automatically.
-         */
+  } catch (error) {
 
-        if (
-          !socketManuallyClosed &&
-          accessToken
-        ) {
+    socketConnecting = false;
 
-          scheduleSocketReconnect();
-
-        }
-
-      };
+    scheduleSocketReconnect();
+  }
+}
 
 
-    socket.onerror =
-      error => {
+/* =========================================================
+   AUTH CHECK
+   ========================================================= */
 
-        console.warn(
-          "WebSocket connection error:",
-          error
-        );
+async function notifyWho() {
 
-      };
+  if (!whoCallback)
+    return;
+
+
+  /*
+   * No session.
+   */
+
+  if (
+    !accessToken &&
+    !refreshToken
+  ) {
+
+    whoCallback(null);
+
+    return;
   }
 
 
-  function scheduleSocketReconnect() {
+  try {
 
-    if (
-      socketManuallyClosed ||
-      !accessToken
-    ) {
+    const result =
+      await api(
+        "/api/auth/me"
+      );
+
+    const email =
+      result?.user?.email ||
+      null;
+
+    if (!email) {
+
+      whoCallback(null);
 
       return;
     }
 
-    clearTimeout(
-      socketTimer
+
+    whoCallback(email);
+
+    connectSocket();
+
+
+  } catch (error) {
+
+    console.warn(
+      "Session check:",
+      error
     );
 
-
-    socketTimer =
-      setTimeout(
-        () => {
-
-          connectSocket();
-
-        },
-        socketDelay
-      );
-
-
-    socketDelay =
-      Math.min(
-        socketDelay * 2,
-        WS_RECONNECT_MAX
-      );
-  }
-
-
-  function closeSocket() {
-
-    socketManuallyClosed =
-      true;
-
-    clearTimeout(
-      socketTimer
-    );
-
-    socketTimer = null;
-
-    if (socket) {
-
-      try {
-        socket.close();
-      } catch (_) {}
-
-    }
-
-    socket = null;
-  }
-
-
-  /* =========================================================
-     PUBLIC API
-     ========================================================= */
-
-  const SYNC = {
 
     /*
-     * Existing app.js API
+     * IMPORTANT:
+     *
+     * Do NOT logout for network errors.
      */
 
-    watch,
-
-    set,
-
-    login,
-
-    logout,
-
-    who(callback) {
-
-      whoCallback =
-        typeof callback ===
-          "function"
-            ? callback
-            : null;
+    if (
+      error.status === 401 ||
+      error.status === 403
+    ) {
 
       /*
-       * Do not wait for WebSocket.
-       * Authentication is handled through
-       * normal REST API.
+       * Try refresh once.
        */
 
-      notifyWho();
+      const refreshed =
+        await refreshAccessToken();
 
-    },
-
-    reset,
-
-    create,
-
-
-    /*
-     * Extra helpers
-     */
-
-    api,
-
-    getMe,
-
-    loadPortal,
-
-    refresh: refreshAccessToken,
-
-    getUser() {
-      return currentUser;
-    },
-
-    isLoggedIn() {
-      return Boolean(
-        accessToken ||
-        refreshToken
-      );
-    },
-
-    getVersion() {
-      return lastServerVersion;
-    },
-
-    reconnect() {
-
-      socketManuallyClosed =
-        false;
-
-      connectSocket();
-
-    }
-
-  };
-
-
-  /* =========================================================
-     EXPOSE GLOBAL
-     ========================================================= */
-
-  window.SYNC =
-    SYNC;
-
-
-  /*
-   * Make the global available BEFORE
-   * app.js starts using it.
-   */
-
-  ready = true;
-
-
-  dispatch(
-    "sync-ready"
-  );
-
-
-  /* =========================================================
-     INITIAL SESSION RESTORE
-     ========================================================= */
-
-  if (
-    accessToken ||
-    refreshToken
-  ) {
-
-    /*
-     * Restore the existing login
-     * after page refresh.
-     */
-
-    notifyWho()
-      .catch(error => {
-
-        console.warn(
-          "Initial session restore failed:",
-          error
-        );
-
-      });
-
-  }
-
-
-  /* =========================================================
-     BROWSER ONLINE / OFFLINE
-     ========================================================= */
-
-  window.addEventListener(
-    "online",
-    () => {
-
-      dispatch(
-        "sync-online"
-      );
-
-      if (
-        accessToken
-      ) {
-
-        /*
-         * Try to restore backend
-         * connection.
-         */
-
-        notifyWho()
-          .catch(() => {});
-
-        connectSocket();
-
-      }
-
-    }
-  );
-
-
-  window.addEventListener(
-    "offline",
-    () => {
-
-      dispatch(
-        "sync-offline"
-      );
-
-    }
-  );
-
-
-  /* =========================================================
-     PERIODIC WEBSOCKET HEALTH CHECK
-     ========================================================= */
-
-  setInterval(
-    () => {
-
-      if (
-        socket &&
-        socket.readyState ===
-          WebSocket.OPEN
-      ) {
+      if (refreshed) {
 
         try {
 
-          socket.send(
-            JSON.stringify({
-              type: "ping"
-            })
-          );
+          const result =
+            await api(
+              "/api/auth/me"
+            );
+
+          const email =
+            result?.user?.email ||
+            null;
+
+          whoCallback(email);
+
+          connectSocket();
+
+          return;
 
         } catch (_) {}
-
-      } else if (
-        accessToken &&
-        !socketManuallyClosed
-      ) {
-
-        connectSocket();
-
       }
 
-    },
-    25000
+
+      clearTokens();
+
+      closeSocket();
+
+      whoCallback(null);
+
+      return;
+    }
+
+
+    /*
+     * Temporary Render/network issue.
+     * Don't destroy login session.
+     */
+
+    const savedEmail =
+      localStorage.getItem(
+        "sonainfo_last_email"
+      );
+
+    if (savedEmail) {
+
+      whoCallback(
+        savedEmail
+      );
+
+      connectSocket();
+
+    } else {
+
+      whoCallback(null);
+    }
+  }
+}
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+async function login(
+  email,
+  password
+) {
+
+  const normalizedEmail =
+    String(email || "")
+      .trim()
+      .toLowerCase();
+
+
+  if (
+    !normalizedEmail ||
+    !password
+  ) {
+
+    const error =
+      new Error(
+        "Email and password are required."
+      );
+
+    error.status = 400;
+
+    throw error;
+  }
+
+
+  /*
+   * NORMAL LOGIN
+   */
+
+  const result =
+    await api(
+      "/api/auth/login",
+      {
+        method: "POST",
+
+        body:
+          JSON.stringify({
+            email:
+              normalizedEmail,
+
+            password
+          })
+      },
+      false
+    );
+
+
+  if (
+    !result?.accessToken ||
+    !result?.refreshToken
+  ) {
+
+    throw new Error(
+      "Invalid login response from server."
+    );
+  }
+
+
+  /*
+   * Save session.
+   */
+
+  saveTokens(
+    result.accessToken,
+    result.refreshToken
   );
 
 
-})();
+  localStorage.setItem(
+    "sonainfo_last_email",
+    normalizedEmail
+  );
+
+
+  /*
+   * Start realtime.
+   */
+
+  connectSocket();
+
+
+  /*
+   * Tell app.js that login succeeded.
+   *
+   * app.js will then load all portal
+   * documents through watchAll().
+   */
+
+  if (whoCallback) {
+
+    whoCallback(
+      normalizedEmail
+    );
+  }
+
+
+  window.dispatchEvent(
+    new CustomEvent(
+      "sonainfo-login",
+      {
+        detail: result.user
+      }
+    )
+  );
+
+
+  return result;
+}
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+async function logout() {
+
+  const oldRefresh =
+    refreshToken;
+
+  clearTokens();
+
+  closeSocket();
+
+  localStorage.removeItem(
+    "sonainfo_last_email"
+  );
+
+
+  try {
+
+    if (oldRefresh) {
+
+      await fetch(
+        API_BASE +
+          "/api/auth/logout",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            "Accept":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+              refreshToken:
+                oldRefresh
+            })
+        }
+      );
+    }
+
+  } catch (_) {}
+
+
+  if (whoCallback)
+    whoCallback(null);
+}
+
+
+/* =========================================================
+   WHO
+   ========================================================= */
+
+function who(callback) {
+
+  whoCallback =
+    typeof callback ===
+      "function"
+      ? callback
+      : null;
+
+  notifyWho();
+}
+
+
+/* =========================================================
+   REGISTER
+   ========================================================= */
+
+async function create(
+  email,
+  password
+) {
+
+  const normalizedEmail =
+    String(email || "")
+      .trim()
+      .toLowerCase();
+
+  return api(
+    "/api/auth/register",
+    {
+      method: "POST",
+
+      body:
+        JSON.stringify({
+          email:
+            normalizedEmail,
+
+          password,
+
+          name:
+            normalizedEmail
+              .split("@")[0],
+
+          role:
+            "member",
+
+          office:
+            null,
+
+          permissions:
+            []
+        })
+    },
+    false
+  );
+}
+
+
+/* =========================================================
+   PASSWORD RESET
+   ========================================================= */
+
+async function reset(email) {
+
+  const error =
+    new Error(
+      "Password reset is not configured on the backend yet."
+    );
+
+  error.code =
+    "PASSWORD_RESET_NOT_CONFIGURED";
+
+  throw error;
+}
+
+
+/* =========================================================
+   PORTAL DOCUMENTS
+   ========================================================= */
+
+async function loadDocument(
+  key
+) {
+
+  const row =
+    await api(
+      "/api/portal/" +
+      encodeURIComponent(key)
+    );
+
+
+  versions.set(
+    key,
+    Number(
+      row?.version || 0
+    )
+  );
+
+
+  if (
+    !row ||
+    !row.data ||
+    typeof row.data !==
+      "object" ||
+    !Object.keys(
+      row.data
+    ).length
+  ) {
+
+    return null;
+  }
+
+
+  return row.data;
+}
+
+
+function watch(
+  key,
+  success,
+  error
+) {
+
+  const watcher = {
+
+    success:
+      typeof success ===
+        "function"
+        ? success
+        : () => {},
+
+    error:
+      typeof error ===
+        "function"
+        ? error
+        : () => {}
+  };
+
+
+  watchers.set(
+    key,
+    watcher
+  );
+
+
+  loadDocument(key)
+
+    .then(data => {
+
+      if (
+        watchers.get(key) ===
+        watcher
+      ) {
+
+        watcher.success(data);
+      }
+
+    })
+
+    .catch(error => {
+
+      if (
+        watchers.get(key) ===
+        watcher
+      ) {
+
+        watcher.error(error);
+      }
+    });
+
+
+  connectSocket();
+
+
+  return () => {
+
+    if (
+      watchers.get(key) ===
+      watcher
+    ) {
+
+      watchers.delete(key);
+    }
+  };
+}
+
+
+/* =========================================================
+   SAVE
+   ========================================================= */
+
+async function set(
+  key,
+  data
+) {
+
+  const result =
+    await api(
+      "/api/portal/" +
+      encodeURIComponent(key),
+      {
+        method: "PUT",
+
+        body:
+          JSON.stringify({
+            data
+          })
+      }
+    );
+
+
+  versions.set(
+    key,
+    Number(
+      result?.version || 0
+    )
+  );
+
+
+  const watcher =
+    watchers.get(key);
+
+
+  if (
+    watcher &&
+    (
+      !socket ||
+      socket.readyState !==
+        WebSocket.OPEN
+    )
+  ) {
+
+    watcher.success(
+      result?.data ||
+      data
+    );
+  }
+
+
+  connectSocket();
+
+  return result;
+}
+
+
+/* =========================================================
+   PUBLIC API
+   ========================================================= */
+
+window.SYNC = {
+
+  watch,
+
+  set,
+
+  login,
+
+  logout,
+
+  who,
+
+  reset,
+
+  create
+};
+
+
+/*
+ * IMPORTANT:
+ * app.js is loaded after this file.
+ */
+
+window.__syncReady = true;
+
+
+/*
+ * Tell app.js to boot.
+ */
+
+window.dispatchEvent(
+  new Event(
+    "sync-ready"
+  )
+);
+
+
+/*
+ * Browser network state.
+ */
+
+window.addEventListener(
+  "online",
+  () => {
+
+    window.dispatchEvent(
+      new Event(
+        "sync-online"
+      )
+    );
+
+    if (accessToken)
+      connectSocket();
+  }
+);
+
+
+window.addEventListener(
+  "offline",
+  () => {
+
+    window.dispatchEvent(
+      new Event(
+        "sync-offline"
+      )
+    );
+  }
+);
