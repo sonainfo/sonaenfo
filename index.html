@@ -1,1246 +1,1343 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-<title>Sonainfo | Executive Portal</title>
-
-<meta name="theme-color" content="#07131d">
-<meta name="description" content="Sonainfo Executive Portal">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link
-  href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
-  rel="stylesheet"
->
-
-<link rel="stylesheet" href="style.css">
-
-<style>
-
-/* =========================================================
-   SONINFO EXECUTIVE PORTAL
-   PREMIUM LOGIN INTERFACE
-   ========================================================= */
-
-:root{
-  --bg:#050b12;
-  --bg2:#071720;
-  --card:#ffffff;
-  --text:#10202d;
-  --muted:#71808d;
-  --gold:#e7b85c;
-  --gold2:#ffd98b;
-  --teal:#12a99d;
-  --teal2:#0c8f86;
-  --line:rgba(255,255,255,.10);
-  --shadow:0 35px 90px rgba(0,0,0,.45);
-}
-
-*{
-  box-sizing:border-box;
-}
-
-html,
-body{
-  margin:0;
-  min-height:100%;
-}
-
-body{
-  font-family:"DM Sans",Arial,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-}
-
-/* =========================================================
-   LOGIN SCREEN
-   ========================================================= */
-
-#login{
-  min-height:100vh;
-  width:100%;
-  position:relative;
-  overflow:hidden;
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="theme-color"
+    content="#07111f"
+  >
+
+  <meta
+    name="description"
+    content="Sonainfo Executive Portal"
+  >
+
+  <title>Sonainfo | Executive Portal</title>
+
+  <!-- Existing CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- =========================================================
+       PREMIUM LOGIN DESIGN
+       ========================================================= -->
+
+  <style>
+
+    /* ---------------------------------------------------------
+       GLOBAL LOGIN RESET
+       --------------------------------------------------------- */
+
+    #login {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 100vh !important;
+      overflow: hidden !important;
+
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+
+      background:
+        radial-gradient(
+          circle at 10% 20%,
+          rgba(37, 99, 235, .18),
+          transparent 32%
+        ),
+        radial-gradient(
+          circle at 90% 15%,
+          rgba(14, 165, 233, .13),
+          transparent 28%
+        ),
+        radial-gradient(
+          circle at 80% 90%,
+          rgba(99, 102, 241, .13),
+          transparent 30%
+        ),
+        #050b14 !important;
+
+      color: #fff !important;
+
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif !important;
+
+      z-index: 9999;
+    }
+
+    #login.hide {
+      display: none !important;
+    }
+
+    /* ---------------------------------------------------------
+       ANIMATED BACKGROUND
+       --------------------------------------------------------- */
+
+    .sx-bg {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .sx-grid {
+      position: absolute;
+      inset: 0;
+
+      background-image:
+        linear-gradient(
+          rgba(255,255,255,.025) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255,255,255,.025) 1px,
+          transparent 1px
+        );
+
+      background-size: 55px 55px;
+
+      mask-image:
+        linear-gradient(
+          to bottom,
+          black,
+          transparent 90%
+        );
+    }
+
+    .sx-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(5px);
+      animation: sxFloat 12s ease-in-out infinite;
+    }
+
+    .sx-orb.one {
+      width: 360px;
+      height: 360px;
+
+      left: -120px;
+      top: -120px;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(37,99,235,.30),
+          transparent 70%
+        );
+    }
+
+    .sx-orb.two {
+      width: 420px;
+      height: 420px;
+
+      right: -150px;
+      bottom: -150px;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(14,165,233,.22),
+          transparent 70%
+        );
+
+      animation-delay: -4s;
+    }
+
+    .sx-orb.three {
+      width: 250px;
+      height: 250px;
+
+      right: 18%;
+      top: 8%;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(124,58,237,.12),
+          transparent 70%
+        );
+
+      animation-delay: -7s;
+    }
+
+    @keyframes sxFloat {
+
+      0%,
+      100% {
+        transform: translate3d(0,0,0) scale(1);
+      }
+
+      50% {
+        transform: translate3d(0,-20px,0) scale(1.05);
+      }
+    }
+
+    /* ---------------------------------------------------------
+       MAIN LOGIN WRAPPER
+       --------------------------------------------------------- */
+
+    .sx-shell {
+      position: relative;
+      z-index: 10;
+
+      width: min(1180px, calc(100% - 40px));
+      min-height: 680px;
+
+      display: grid;
+      grid-template-columns: 1.08fr .92fr;
+
+      border:
+        1px solid rgba(255,255,255,.10);
+
+      border-radius: 30px;
+
+      overflow: hidden;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(15,23,42,.92),
+          rgba(8,15,28,.96)
+        );
+
+      box-shadow:
+        0 40px 100px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.025),
+        inset 0 1px 0 rgba(255,255,255,.06);
+
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+    }
+
+    /* ---------------------------------------------------------
+       LEFT BRAND AREA
+       --------------------------------------------------------- */
 
-  display:flex;
-  align-items:center;
-  justify-content:center;
+    .sx-brand {
+      position: relative;
+
+      padding: 58px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      overflow: hidden;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(30,64,175,.18),
+          rgba(15,23,42,.30)
+        );
+
+      border-right:
+        1px solid rgba(255,255,255,.07);
+    }
 
-  padding:40px 22px;
-
-  background:
-    radial-gradient(
-      circle at 8% 10%,
-      rgba(0,174,163,.24),
-      transparent 34%
-    ),
-    radial-gradient(
-      circle at 90% 88%,
-      rgba(210,156,57,.17),
-      transparent 32%
-    ),
-    radial-gradient(
-      circle at 52% 50%,
-      rgba(23,78,87,.12),
-      transparent 40%
-    ),
-    linear-gradient(
-      135deg,
-      #06151a 0%,
-      #050c14 48%,
-      #070c12 100%
-    );
-}
-
-/* Background light effects */
-
-#login::before{
-  content:"";
-  position:absolute;
-
-  width:560px;
-  height:560px;
+    .sx-brand::after {
+      content: "";
 
-  left:-250px;
-  top:-270px;
+      position: absolute;
 
-  border-radius:50%;
+      width: 420px;
+      height: 420px;
 
-  background:rgba(13,183,171,.10);
-  filter:blur(25px);
+      right: -180px;
+      bottom: -190px;
 
-  pointer-events:none;
-}
+      border-radius: 50%;
 
-#login::after{
-  content:"";
-  position:absolute;
+      background:
+        radial-gradient(
+          circle,
+          rgba(37,99,235,.16),
+          transparent 70%
+        );
 
-  width:500px;
-  height:500px;
+      pointer-events: none;
+    }
 
-  right:-220px;
-  bottom:-260px;
+    /* ---------------------------------------------------------
+       LOGO
+       --------------------------------------------------------- */
 
-  border-radius:50%;
+    .sx-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
 
-  background:rgba(231,184,92,.09);
-  filter:blur(35px);
+    .sx-logo {
+      width: 56px;
+      height: 56px;
 
-  pointer-events:none;
-}
+      display: flex;
+      align-items: center;
+      justify-content: center;
 
-/* =========================================================
-   LOGIN CONTAINER
-   ========================================================= */
+      border-radius: 17px;
 
-.login-shell{
-  position:relative;
-  z-index:2;
+      background:
+        linear-gradient(
+          135deg,
+          #2563eb,
+          #0ea5e9
+        );
 
-  width:min(1180px,100%);
+      box-shadow:
+        0 12px 35px rgba(37,99,235,.32);
 
-  min-height:690px;
+      font-size: 23px;
+      font-weight: 900;
 
-  display:grid;
-  grid-template-columns:1.02fr .98fr;
+      letter-spacing: -1px;
+    }
 
-  overflow:hidden;
+    .sx-brand-name {
+      font-size: 25px;
+      font-weight: 850;
+      letter-spacing: -.8px;
+    }
 
-  border-radius:30px;
+    .sx-brand-name span {
+      color: #38bdf8;
+    }
 
-  background:rgba(255,255,255,.035);
+    .sx-brand-sub {
+      margin-top: 3px;
 
-  border:1px solid rgba(255,255,255,.13);
+      color: #94a3b8;
 
-  box-shadow:
-    0 50px 120px rgba(0,0,0,.55),
-    inset 0 1px rgba(255,255,255,.08);
+      font-size: 11px;
+      font-weight: 700;
 
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-}
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
 
-/* =========================================================
-   LEFT BRAND PANEL
-   ========================================================= */
+    /* ---------------------------------------------------------
+       WELCOME CONTENT
+       --------------------------------------------------------- */
 
-.login-brand{
-  position:relative;
+    .sx-welcome {
+      margin-top: 70px;
+      max-width: 560px;
+    }
 
-  padding:52px 58px;
+    .sx-mini-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
 
-  color:white;
+      padding: 8px 13px;
 
-  overflow:hidden;
+      border-radius: 999px;
 
-  background:
-    radial-gradient(
-      circle at 75% 12%,
-      rgba(231,184,92,.28),
-      transparent 24%
-    ),
-    radial-gradient(
-      circle at 5% 80%,
-      rgba(10,185,172,.20),
-      transparent 34%
-    ),
-    linear-gradient(
-      145deg,
-      #103f42 0%,
-      #09252f 45%,
-      #07151f 100%
-    );
-}
+      background:
+        rgba(37,99,235,.10);
 
-.login-brand::before{
-  content:"";
+      border:
+        1px solid rgba(96,165,250,.20);
 
-  position:absolute;
+      color: #93c5fd;
 
-  width:420px;
-  height:420px;
+      font-size: 11px;
+      font-weight: 800;
 
-  right:-220px;
-  top:-180px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+    }
 
-  border-radius:50%;
+    .sx-dot {
+      width: 7px;
+      height: 7px;
 
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:
-    0 0 0 55px rgba(255,255,255,.015),
-    0 0 0 110px rgba(255,255,255,.012);
+      border-radius: 50%;
 
-  pointer-events:none;
-}
+      background: #22c55e;
 
-.login-brand::after{
-  content:"";
+      box-shadow:
+        0 0 12px rgba(34,197,94,.8);
 
-  position:absolute;
+      animation: sxPulse 1.8s infinite;
+    }
 
-  width:280px;
-  height:1px;
+    @keyframes sxPulse {
 
-  left:58px;
-  bottom:108px;
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(231,184,92,.7),
-      transparent
-    );
-}
+      50% {
+        opacity: .45;
+        transform: scale(.75);
+      }
+    }
 
-/* Logo */
+    .sx-welcome h1 {
+      margin: 20px 0 18px;
 
-.brand-logo{
-  position:relative;
-  z-index:2;
+      font-size: clamp(40px, 4vw, 64px);
 
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
+      line-height: 1.02;
 
-  font-size:27px;
-  font-weight:700;
-  letter-spacing:-1px;
-}
+      letter-spacing: -3px;
 
-.brand-logo-mark{
-  width:42px;
-  height:42px;
+      font-weight: 900;
 
-  display:flex;
-  align-items:center;
-  justify-content:center;
+      background:
+        linear-gradient(
+          120deg,
+          #ffffff 15%,
+          #bfdbfe 55%,
+          #38bdf8 90%
+        );
 
-  border-radius:12px;
+      -webkit-background-clip: text;
+      background-clip: text;
 
-  color:#0a2529;
+      -webkit-text-fill-color: transparent;
+    }
 
-  background:
-    linear-gradient(
-      145deg,
-      #ffe4a3,
-      #d89e37
-    );
+    .sx-welcome p {
+      margin: 0;
 
-  box-shadow:
-    0 10px 25px rgba(0,0,0,.25);
-}
+      max-width: 520px;
 
-.brand-logo-text{
-  font-family:"Playfair Display",serif;
-  font-size:29px;
-}
+      color: #94a3b8;
 
-.brand-logo-text span{
-  color:var(--gold);
-}
+      font-size: 15px;
+      line-height: 1.8;
+    }
 
-/* Welcome ticker */
+    /* ---------------------------------------------------------
+       MOVING WELCOME BAR
+       --------------------------------------------------------- */
 
-.welcome-pill{
-  position:relative;
-  z-index:2;
+    .sx-marquee {
+      width: 100%;
 
-  margin-top:70px;
+      margin-top: 38px;
 
-  display:inline-flex;
-  align-items:center;
-  gap:9px;
+      overflow: hidden;
 
-  padding:9px 14px;
+      border-top:
+        1px solid rgba(255,255,255,.06);
 
-  border-radius:999px;
+      border-bottom:
+        1px solid rgba(255,255,255,.06);
 
-  background:rgba(255,255,255,.065);
+      padding: 12px 0;
 
-  border:1px solid rgba(255,255,255,.12);
+      background:
+        rgba(255,255,255,.018);
+    }
 
-  color:#dce9eb;
+    .sx-marquee-track {
+      width: max-content;
 
-  font-size:12px;
-  font-weight:600;
-  letter-spacing:.7px;
+      display: flex;
 
-  text-transform:uppercase;
-}
+      animation:
+        sxMarquee 24s linear infinite;
+    }
 
-.welcome-dot{
-  width:7px;
-  height:7px;
+    .sx-marquee-track span {
+      padding-right: 45px;
 
-  border-radius:50%;
+      color: #64748b;
 
-  background:#55dfca;
+      font-size: 11px;
+      font-weight: 800;
 
-  box-shadow:
-    0 0 0 5px rgba(85,223,202,.10),
-    0 0 16px rgba(85,223,202,.8);
+      letter-spacing: 1.6px;
 
-  animation:pulseDot 2s infinite;
-}
+      text-transform: uppercase;
 
-@keyframes pulseDot{
-  0%,100%{
-    opacity:1;
-    transform:scale(1);
-  }
-  50%{
-    opacity:.55;
-    transform:scale(.72);
-  }
-}
+      white-space: nowrap;
+    }
 
-/* Main heading */
+    .sx-marquee-track b {
+      color: #38bdf8;
+      margin: 0 8px;
+    }
 
-.brand-heading{
-  position:relative;
-  z-index:2;
+    @keyframes sxMarquee {
 
-  max-width:560px;
+      from {
+        transform: translateX(0);
+      }
 
-  margin:25px 0 20px;
+      to {
+        transform: translateX(-50%);
+      }
+    }
 
-  font-family:"Playfair Display",Georgia,serif;
+    /* ---------------------------------------------------------
+       FEATURE STATS
+       --------------------------------------------------------- */
 
-  font-size:clamp(42px,4.1vw,66px);
+    .sx-stats {
+      display: flex;
+      gap: 12px;
 
-  line-height:1.04;
+      margin-top: 34px;
+    }
 
-  letter-spacing:-2.5px;
+    .sx-stat {
+      min-width: 120px;
 
-  color:#f6faf9;
-}
+      padding: 14px 16px;
 
-.brand-heading .gold{
-  color:var(--gold2);
-}
+      border-radius: 15px;
 
-/* Description */
+      background:
+        rgba(255,255,255,.035);
 
-.brand-description{
-  position:relative;
-  z-index:2;
+      border:
+        1px solid rgba(255,255,255,.06);
+    }
 
-  max-width:500px;
+    .sx-stat strong {
+      display: block;
 
-  margin:0;
+      font-size: 18px;
 
-  color:#b8d0d2;
+      color: #e2e8f0;
+    }
 
-  font-size:15px;
-  line-height:1.8;
-}
+    .sx-stat span {
+      display: block;
 
-/* Stats */
+      margin-top: 4px;
 
-.brand-stats{
-  position:absolute;
-  z-index:2;
+      color: #64748b;
 
-  left:58px;
-  right:58px;
-  bottom:42px;
+      font-size: 10px;
+      font-weight: 700;
 
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
+      text-transform: uppercase;
+      letter-spacing: .8px;
+    }
 
-  gap:13px;
-}
+    /* ---------------------------------------------------------
+       RIGHT LOGIN PANEL
+       --------------------------------------------------------- */
 
-.brand-stat{
-  padding:17px 18px;
+    .sx-form-panel {
+      position: relative;
 
-  border-radius:17px;
+      padding: 48px;
 
-  background:rgba(255,255,255,.055);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
 
-  border:1px solid rgba(255,255,255,.10);
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,.035),
+          rgba(255,255,255,.012)
+        );
+    }
 
-  box-shadow:
-    inset 0 1px rgba(255,255,255,.05);
+    .sx-form-top {
+      margin-bottom: 30px;
+    }
 
-  transition:
-    transform .25s ease,
-    background .25s ease;
-}
+    .sx-form-top h2 {
+      margin: 0 0 8px;
 
-.brand-stat:hover{
-  transform:translateY(-4px);
-  background:rgba(255,255,255,.08);
-}
+      color: #f8fafc;
 
-.brand-stat strong{
-  display:block;
+      font-size: 30px;
+      font-weight: 850;
 
-  color:#f7cf7c;
+      letter-spacing: -1px;
+    }
 
-  font-family:"Playfair Display",serif;
+    .sx-form-top p {
+      margin: 0;
 
-  font-size:26px;
-  line-height:1;
-}
+      color: #64748b;
 
-.brand-stat span{
-  display:block;
+      font-size: 13px;
+      line-height: 1.6;
+    }
 
-  margin-top:7px;
+    /* ---------------------------------------------------------
+       ACCOUNT CHIPS
+       --------------------------------------------------------- */
 
-  color:#a9c4c6;
+    #chips {
+      display: grid !important;
 
-  font-size:11px;
-  font-weight:600;
+      grid-template-columns:
+        repeat(2, minmax(0,1fr));
 
-  text-transform:uppercase;
-  letter-spacing:.7px;
-}
+      gap: 8px;
 
-/* =========================================================
-   RIGHT LOGIN PANEL
-   ========================================================= */
+      margin-bottom: 22px;
+    }
 
-.login-form{
-  position:relative;
+    #chips button {
+      min-height: 42px;
 
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+      border:
+        1px solid rgba(255,255,255,.08) !important;
 
-  padding:56px 64px;
+      border-radius: 12px !important;
 
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,.99),
-      rgba(248,251,251,.98)
-    );
-}
+      background:
+        rgba(255,255,255,.035) !important;
 
-.login-form::before{
-  content:"";
+      color: #cbd5e1 !important;
 
-  position:absolute;
+      font-size: 11px !important;
+      font-weight: 750 !important;
 
-  width:230px;
-  height:230px;
+      cursor: pointer;
 
-  right:-120px;
-  top:-120px;
+      transition:
+        .2s ease;
 
-  border-radius:50%;
+      box-shadow: none !important;
+    }
 
-  background:rgba(14,164,153,.07);
-}
+    #chips button:hover {
+      transform: translateY(-2px);
 
-/* Form top */
+      border-color:
+        rgba(56,189,248,.35) !important;
 
-.form-kicker{
-  position:relative;
-  z-index:2;
+      background:
+        rgba(37,99,235,.12) !important;
 
-  display:flex;
-  align-items:center;
-  gap:9px;
+      color: #fff !important;
+    }
 
-  margin-bottom:15px;
+    /* ---------------------------------------------------------
+       FORM FIELDS
+       --------------------------------------------------------- */
 
-  color:#0d948a;
+    .sx-field {
+      margin-bottom: 17px;
+    }
 
-  font-size:11px;
-  font-weight:700;
+    .sx-field label {
+      display: block;
 
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-}
+      margin-bottom: 8px;
 
-.form-kicker::before{
-  content:"";
+      color: #94a3b8;
 
-  width:26px;
-  height:2px;
+      font-size: 11px;
+      font-weight: 800;
 
-  border-radius:2px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
 
-  background:#12a99d;
-}
+    .sx-input-wrap {
+      position: relative;
+    }
 
-.login-form h2{
-  position:relative;
-  z-index:2;
+    .sx-input {
+      width: 100%;
 
-  margin:0;
+      box-sizing: border-box;
 
-  font-family:"Playfair Display",Georgia,serif;
+      height: 52px;
 
-  color:#0a1a27;
+      padding:
+        0 16px;
 
-  font-size:42px;
-  line-height:1.08;
+      border-radius: 13px;
 
-  letter-spacing:-1.5px;
-}
+      outline: none;
 
-.login-subtitle{
-  position:relative;
-  z-index:2;
+      border:
+        1px solid rgba(255,255,255,.09);
 
-  margin:12px 0 30px;
+      background:
+        rgba(2,6,23,.55);
 
-  color:#71808d;
+      color: #f8fafc;
 
-  font-size:14px;
-  line-height:1.6;
-}
+      font-size: 14px;
 
-/* Account chips */
+      transition:
+        border-color .2s ease,
+        box-shadow .2s ease,
+        background .2s ease;
+    }
 
-.chips{
-  position:relative;
-  z-index:3;
+    .sx-input::placeholder {
+      color: #475569;
+    }
 
-  display:flex;
-  flex-wrap:wrap;
+    .sx-input:focus {
+      border-color:
+        rgba(56,189,248,.65);
 
-  gap:8px;
+      background:
+        rgba(2,6,23,.8);
 
-  margin-bottom:23px;
-}
+      box-shadow:
+        0 0 0 4px rgba(56,189,248,.08);
+    }
 
-.chips button,
-.chip{
-  border:1px solid #e0e7eb;
+    /* ---------------------------------------------------------
+       PASSWORD TOGGLE
+       --------------------------------------------------------- */
 
-  background:#f7fafb;
+    .sx-password-toggle {
+      position: absolute;
 
-  color:#4d6471;
+      right: 8px;
+      top: 7px;
 
-  padding:8px 12px;
+      height: 38px;
 
-  border-radius:999px;
+      padding: 0 11px;
 
-  font-family:inherit;
+      border: 0;
 
-  font-size:11px;
-  font-weight:600;
+      border-radius: 9px;
 
-  cursor:pointer;
+      background:
+        rgba(255,255,255,.05);
 
-  transition:
-    border-color .2s ease,
-    background .2s ease,
-    transform .2s ease;
-}
+      color: #94a3b8;
 
-.chips button:hover,
-.chip:hover{
-  border-color:#9ad8d2;
+      font-size: 11px;
+      font-weight: 750;
 
-  background:#effaf8;
+      cursor: pointer;
+    }
 
-  color:#087f77;
+    .sx-password-toggle:hover {
+      background:
+        rgba(255,255,255,.09);
 
-  transform:translateY(-1px);
-}
+      color: #fff;
+    }
 
-/* Form groups */
+    #pw {
+      padding-right: 82px;
+    }
 
-.fg{
-  position:relative;
-  z-index:2;
+    /* ---------------------------------------------------------
+       ERROR / STATUS
+       --------------------------------------------------------- */
 
-  margin-bottom:18px;
-}
+    #le {
+      min-height: 18px;
 
-.fg label{
-  display:block;
+      margin:
+        5px 0 4px;
 
-  margin-bottom:8px;
+      color: #fb7185;
 
-  color:#445968;
+      font-size: 12px;
+      font-weight: 650;
+    }
 
-  font-size:12px;
-  font-weight:700;
+    #sy {
+      color: #64748b !important;
 
-  letter-spacing:.25px;
-}
+      font-size: 11px !important;
 
-.fg input{
-  width:100%;
+      line-height: 1.5;
+    }
 
-  height:52px;
+    /* ---------------------------------------------------------
+       BUTTONS
+       --------------------------------------------------------- */
 
-  padding:0 16px;
+    .sx-login-btn {
+      width: 100%;
 
-  border:1px solid #dce5e9;
+      height: 53px;
 
-  border-radius:13px;
+      margin-top: 17px;
 
-  outline:none;
+      border: 0;
 
-  background:#fbfcfd;
+      border-radius: 14px;
 
-  color:#10202d;
+      cursor: pointer;
 
-  font-family:inherit;
+      color: #fff;
 
-  font-size:14px;
+      font-size: 14px;
+      font-weight: 850;
 
-  box-shadow:
-    0 2px 5px rgba(13,35,48,.025);
+      letter-spacing: .2px;
 
-  transition:
-    border-color .2s ease,
-    box-shadow .2s ease,
-    background .2s ease;
-}
+      background:
+        linear-gradient(
+          135deg,
+          #2563eb,
+          #0284c7
+        );
 
-.fg input:hover{
-  border-color:#c7d6dc;
-}
+      box-shadow:
+        0 15px 30px rgba(37,99,235,.22);
 
-.fg input:focus{
-  border-color:#14a99d;
+      transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        filter .2s ease;
+    }
 
-  background:white;
+    .sx-login-btn:hover {
+      transform: translateY(-2px);
 
-  box-shadow:
-    0 0 0 4px rgba(18,169,157,.10);
-}
+      box-shadow:
+        0 20px 40px rgba(37,99,235,.30);
 
-.fg input::placeholder{
-  color:#a5b2b9;
-}
+      filter: brightness(1.08);
+    }
 
-/* Error */
+    .sx-login-btn:active {
+      transform: translateY(0);
+    }
 
-.err{
-  position:relative;
-  z-index:2;
+    .sx-login-btn:disabled {
+      opacity: .65;
+      cursor: wait;
+    }
 
-  min-height:0;
+    /* ---------------------------------------------------------
+       FORGOT PASSWORD
+       --------------------------------------------------------- */
 
-  margin:0 0 5px;
+    .sx-forgot {
+      display: flex;
+      justify-content: center;
 
-  color:#c53d3d;
+      margin-top: 16px;
+    }
 
-  font-size:12px;
-  line-height:1.5;
-}
+    .sx-forgot button {
+      border: 0;
+      background: none;
 
-/* Connection status */
+      color: #60a5fa;
 
-#sy{
-  position:relative;
-  z-index:2;
+      font-size: 12px;
+      font-weight: 700;
 
-  display:flex;
-  align-items:center;
-  gap:7px;
+      cursor: pointer;
+    }
 
-  margin:2px 0 15px !important;
+    .sx-forgot button:hover {
+      color: #7dd3fc;
+      text-decoration: underline;
+    }
 
-  color:#788994 !important;
+    /* ---------------------------------------------------------
+       SECURITY FOOTER
+       --------------------------------------------------------- */
 
-  font-size:11px !important;
-}
+    .sx-security {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
 
-#sy::before{
-  content:"";
+      margin-top: 28px;
 
-  width:7px;
-  height:7px;
+      color: #475569;
 
-  flex:none;
+      font-size: 10px;
+      font-weight: 700;
 
-  border-radius:50%;
+      text-align: center;
+    }
 
-  background:#e5b453;
+    .sx-lock {
+      width: 7px;
+      height: 9px;
 
-  box-shadow:0 0 0 4px rgba(229,180,83,.10);
-}
+      border:
+        1px solid #64748b;
 
-/* Login button */
+      border-radius: 2px;
 
-.login-submit{
-  position:relative;
-  z-index:2;
+      position: relative;
+    }
 
-  width:100%;
-  height:54px;
+    .sx-lock::before {
+      content: "";
 
-  border:0;
-  border-radius:14px;
+      position: absolute;
 
-  cursor:pointer;
+      width: 5px;
+      height: 5px;
 
-  color:white;
+      left: 0;
+      top: -6px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #15a99d,
-      #087f79
-    );
+      border:
+        1px solid #64748b;
 
-  font-family:inherit;
+      border-bottom: 0;
 
-  font-size:14px;
-  font-weight:700;
+      border-radius: 5px 5px 0 0;
+    }
 
-  letter-spacing:.1px;
+    /* ---------------------------------------------------------
+       RESPONSIVE
+       --------------------------------------------------------- */
 
-  box-shadow:
-    0 12px 25px rgba(11,143,134,.22);
+    @media (max-width: 900px) {
 
-  transition:
-    transform .2s ease,
-    box-shadow .2s ease,
-    filter .2s ease;
-}
+      .sx-shell {
+        grid-template-columns: 1fr;
 
-.login-submit:hover{
-  transform:translateY(-2px);
+        width:
+          min(560px, calc(100% - 24px));
 
-  filter:brightness(1.04);
+        min-height: auto;
 
-  box-shadow:
-    0 16px 32px rgba(11,143,134,.29);
-}
+        max-height: calc(100vh - 24px);
 
-.login-submit:active{
-  transform:translateY(0);
-}
+        overflow-y: auto;
 
-.login-submit span{
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  gap:9px;
-}
+        border-radius: 24px;
+      }
 
-/* Footer text */
+      .sx-brand {
+        padding: 30px;
 
-.login-help{
-  position:relative;
-  z-index:2;
+        min-height: 360px;
 
-  margin:17px 0 0;
+        border-right: 0;
 
-  color:#83929c;
+        border-bottom:
+          1px solid rgba(255,255,255,.07);
+      }
 
-  font-size:11px;
-  line-height:1.6;
-}
+      .sx-welcome {
+        margin-top: 35px;
+      }
 
-.login-help strong{
-  color:#566a76;
-}
+      .sx-welcome h1 {
+        font-size: 42px;
+      }
 
-/* Security footer */
+      .sx-form-panel {
+        padding: 30px;
+      }
+    }
 
-.security-note{
-  position:relative;
-  z-index:2;
+    @media (max-width: 520px) {
 
-  display:flex;
-  align-items:center;
-  gap:9px;
+      #login {
+        align-items: flex-start;
 
-  margin-top:28px;
-  padding-top:18px;
+        padding:
+          12px 0;
+      }
 
-  border-top:1px solid #edf1f3;
+      .sx-shell {
+        width:
+          calc(100% - 18px);
 
-  color:#8a989f;
+        max-height:
+          calc(100vh - 18px);
 
-  font-size:10px;
-}
+        border-radius: 20px;
+      }
 
-.security-icon{
-  width:26px;
-  height:26px;
+      .sx-brand {
+        padding: 24px;
 
-  display:flex;
-  align-items:center;
-  justify-content:center;
+        min-height: 315px;
+      }
 
-  border-radius:8px;
+      .sx-form-panel {
+        padding: 24px;
+      }
 
-  background:#eff8f7;
+      .sx-logo {
+        width: 48px;
+        height: 48px;
 
-  color:#0c9489;
+        border-radius: 14px;
 
-  font-size:13px;
-}
+        font-size: 19px;
+      }
 
-/* =========================================================
-   WELCOME MOVING TEXT
-   ========================================================= */
+      .sx-brand-name {
+        font-size: 21px;
+      }
 
-.welcome-marquee{
-  position:absolute;
+      .sx-welcome h1 {
+        font-size: 36px;
 
-  left:0;
-  right:0;
-  bottom:0;
+        letter-spacing: -2px;
+      }
 
-  z-index:5;
+      .sx-welcome p {
+        font-size: 13px;
+      }
 
-  height:34px;
+      .sx-stats {
+        gap: 7px;
+      }
 
-  overflow:hidden;
+      .sx-stat {
+        min-width: 0;
 
-  display:flex;
-  align-items:center;
+        flex: 1;
 
-  background:rgba(4,11,17,.76);
+        padding: 11px;
+      }
 
-  border-top:1px solid rgba(255,255,255,.07);
+      .sx-stat strong {
+        font-size: 15px;
+      }
 
-  backdrop-filter:blur(10px);
-}
+      .sx-stat span {
+        font-size: 8px;
+      }
 
-.welcome-track{
-  display:flex;
-  width:max-content;
+      #chips {
+        grid-template-columns: 1fr 1fr !important;
+      }
 
-  animation:
-    welcomeMove 28s linear infinite;
-}
+      .sx-form-top h2 {
+        font-size: 25px;
+      }
+    }
 
-.welcome-track span{
-  display:inline-flex;
-  align-items:center;
-
-  padding-right:55px;
-
-  color:#9fb8bb;
-
-  font-size:10px;
-  font-weight:600;
-
-  letter-spacing:1.5px;
-
-  text-transform:uppercase;
-}
-
-.welcome-track b{
-  color:#e6b95e;
-
-  margin-right:9px;
-}
-
-@keyframes welcomeMove{
-  from{
-    transform:translateX(0);
-  }
-
-  to{
-    transform:translateX(-50%);
-  }
-}
-
-/* =========================================================
-   HIDDEN APP
-   ========================================================= */
-
-.hide{
-  display:none !important;
-}
-
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
-
-@media(max-width:950px){
-
-  #login{
-    padding:25px 16px 55px;
-  }
-
-  .login-shell{
-    grid-template-columns:1fr;
-
-    min-height:auto;
-
-    max-width:620px;
-  }
-
-  .login-brand{
-    min-height:470px;
-
-    padding:38px 32px 150px;
-  }
-
-  .welcome-pill{
-    margin-top:48px;
-  }
-
-  .brand-heading{
-    font-size:46px;
-  }
-
-  .brand-stats{
-    left:32px;
-    right:32px;
-    bottom:30px;
-  }
-
-  .login-form{
-    padding:42px 34px 45px;
-  }
-}
-
-@media(max-width:600px){
-
-  #login{
-    align-items:flex-start;
-
-    padding:15px 10px 50px;
-  }
-
-  .login-shell{
-    border-radius:23px;
-  }
-
-  .login-brand{
-    min-height:440px;
-
-    padding:30px 24px 135px;
-  }
-
-  .brand-logo{
-    font-size:24px;
-  }
-
-  .brand-logo-mark{
-    width:37px;
-    height:37px;
-  }
-
-  .brand-logo-text{
-    font-size:25px;
-  }
-
-  .welcome-pill{
-    margin-top:42px;
-
-    font-size:9px;
-  }
-
-  .brand-heading{
-    margin-top:20px;
-
-    font-size:37px;
-
-    letter-spacing:-1.5px;
-  }
-
-  .brand-description{
-    font-size:13px;
-  }
-
-  .brand-stats{
-    left:24px;
-    right:24px;
-    bottom:25px;
-
-    gap:7px;
-  }
-
-  .brand-stat{
-    padding:13px 9px;
-    border-radius:12px;
-  }
-
-  .brand-stat strong{
-    font-size:20px;
-  }
-
-  .brand-stat span{
-    font-size:8px;
-  }
-
-  .login-form{
-    padding:35px 23px 35px;
-  }
-
-  .login-form h2{
-    font-size:35px;
-  }
-
-  .chips{
-    gap:6px;
-  }
-
-  .chips button,
-  .chip{
-    font-size:10px;
-    padding:7px 10px;
-  }
-
-  .welcome-marquee{
-    height:30px;
-  }
-
-  .welcome-track span{
-    font-size:8px;
-  }
-}
-
-/* =========================================================
-   ACCESSIBILITY
-   ========================================================= */
-
-@media(prefers-reduced-motion:reduce){
-
-  *,
-  *::before,
-  *::after{
-    animation-duration:.01ms !important;
-    animation-iteration-count:1 !important;
-    scroll-behavior:auto !important;
-    transition-duration:.01ms !important;
-  }
-}
-
-</style>
+  </style>
 </head>
 
 <body>
 
-<!-- =======================================================
-     LOGIN
-     ======================================================= -->
+  <!-- =========================================================
+       PREMIUM LOGIN
+       ========================================================= -->
 
-<div id="login">
+  <div id="login">
 
-  <div class="login-shell">
+    <!-- Animated Background -->
+    <div class="sx-bg">
 
-    <!-- =================================================
-         LEFT SIDE / BRAND
-         ================================================= -->
+      <div class="sx-grid"></div>
 
-    <section class="login-brand">
+      <div class="sx-orb one"></div>
+      <div class="sx-orb two"></div>
+      <div class="sx-orb three"></div>
 
-      <div class="brand-logo">
-
-        <div class="brand-logo-mark">
-          ◈
-        </div>
-
-        <div class="brand-logo-text">
-          Sona<span>info</span>
-        </div>
-
-      </div>
+    </div>
 
 
-      <div class="welcome-pill">
-        <span class="welcome-dot"></span>
-        Welcome to Sonainfo Executive Portal
-      </div>
+    <!-- Main Login Card -->
+    <section class="sx-shell">
 
 
-      <h1 class="brand-heading">
-        Every case.
-        Every rupee.
-        <span class="gold">Every decision.</span>
-      </h1>
+      <!-- =====================================================
+           LEFT SIDE
+           ===================================================== -->
 
-
-      <p class="brand-description">
-        A secure executive workspace for complaints, enquiries,
-        penalties, finance, examinations, announcements and
-        organization-wide decisions.
-      </p>
-
-
-      <div class="brand-stats">
-
-        <div class="brand-stat">
-          <strong>1,800</strong>
-          <span>Employees</span>
-        </div>
-
-        <div class="brand-stat">
-          <strong>₹6 Cr</strong>
-          <span>Total Account</span>
-        </div>
-
-        <div class="brand-stat">
-          <strong>8</strong>
-          <span>Departments</span>
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- =================================================
-         RIGHT SIDE / LOGIN
-         ================================================= -->
-
-    <section class="login-form">
-
-      <div class="form-kicker">
-        Executive Access
-      </div>
-
-
-      <h2>
-        Sign in
-      </h2>
-
-
-      <p class="login-subtitle">
-        Access your Sonainfo workspace securely.
-        Choose your account or enter your credentials below.
-      </p>
-
-
-      <!-- Account chips are populated by app.js -->
-      <div class="chips" id="chips"></div>
-
-
-      <!-- Email -->
-
-      <div class="fg">
-
-        <label for="em">
-          Email address
-        </label>
-
-        <input
-          id="em"
-          type="email"
-          autocomplete="username"
-          placeholder="name@sonainfo.com"
-          spellcheck="false"
-        >
-
-      </div>
-
-
-      <!-- Password -->
-
-      <div class="fg">
-
-        <label for="pw">
-          Password
-        </label>
-
-        <input
-          id="pw"
-          type="password"
-          autocomplete="current-password"
-          placeholder="Enter your password"
-          onkeydown="if(event.key==='Enter') login()"
-        >
-
-      </div>
-
-
-      <!-- Error -->
-
-      <div
-        class="err"
-        id="le">
-      </div>
-
-
-      <!-- Connection status -->
-
-      <div
-        class="hint"
-        id="sy"
-      >
-        Connecting to shared data...
-      </div>
-
-
-      <!-- Login button -->
-
-      <button
-        class="login-submit"
-        onclick="login()"
-        type="button"
-      >
-
-        <span>
-          Sign in
-          <span style="font-size:17px;">→</span>
-        </span>
-
-      </button>
-
-
-      <p class="login-help">
-        Sign in with the
-        <strong>email and password</strong>
-        created for you.
-        If you do not have a login, contact the
-        <strong>SEC Committee</strong>.
-      </p>
-
-
-      <div class="security-note">
-
-        <div class="security-icon">
-          ✓
-        </div>
+      <div class="sx-brand">
 
         <div>
-          Secure executive access · Shared data synchronization enabled
+
+          <!-- Logo -->
+          <div class="sx-logo-row">
+
+            <div class="sx-logo">
+              SX
+            </div>
+
+            <div>
+
+              <div class="sx-brand-name">
+                Sona<span>info</span>
+              </div>
+
+              <div class="sx-brand-sub">
+                Executive Portal
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- Welcome -->
+          <div class="sx-welcome">
+
+            <div class="sx-mini-badge">
+
+              <span class="sx-dot"></span>
+
+              Secure Executive Access
+
+            </div>
+
+
+            <h1>
+              Welcome to<br>
+              Sonainfo.
+            </h1>
+
+
+            <p>
+              A centralized executive workspace for
+              managing operations, finance, committees,
+              announcements, examinations and
+              organizational activities.
+            </p>
+
+
+            <!-- Moving Text -->
+            <div class="sx-marquee">
+
+              <div class="sx-marquee-track">
+
+                <span>
+                  WELCOME TO SONAINFO
+                  <b>•</b>
+                  EXECUTIVE PORTAL
+                  <b>•</b>
+                  SECURE MANAGEMENT
+                  <b>•</b>
+                  SMART OPERATIONS
+                  <b>•</b>
+                </span>
+
+                <span>
+                  WELCOME TO SONAINFO
+                  <b>•</b>
+                  EXECUTIVE PORTAL
+                  <b>•</b>
+                  SECURE MANAGEMENT
+                  <b>•</b>
+                  SMART OPERATIONS
+                  <b>•</b>
+                </span>
+
+              </div>
+
+            </div>
+
+
+            <!-- Stats -->
+            <div class="sx-stats">
+
+              <div class="sx-stat">
+
+                <strong>24/7</strong>
+
+                <span>
+                  Availability
+                </span>
+
+              </div>
+
+
+              <div class="sx-stat">
+
+                <strong>Live</strong>
+
+                <span>
+                  Synchronization
+                </span>
+
+              </div>
+
+
+              <div class="sx-stat">
+
+                <strong>Secure</strong>
+
+                <span>
+                  Access
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <!-- Footer -->
+        <div
+          style="
+            color:#475569;
+            font-size:10px;
+            font-weight:700;
+            letter-spacing:.7px;
+          "
+        >
+          SONINFO EXECUTIVE MANAGEMENT SYSTEM
+        </div>
+
+      </div>
+
+
+      <!-- =====================================================
+           RIGHT SIDE LOGIN
+           ===================================================== -->
+
+      <div class="sx-form-panel">
+
+
+        <div class="sx-form-top">
+
+          <div
+            style="
+              color:#38bdf8;
+              font-size:10px;
+              font-weight:850;
+              letter-spacing:1.5px;
+              text-transform:uppercase;
+              margin-bottom:10px;
+            "
+          >
+            Executive Authentication
+          </div>
+
+          <h2>
+            Sign in to continue
+          </h2>
+
+          <p>
+            Access your authorized Sonainfo
+            workspace securely.
+          </p>
+
+        </div>
+
+
+        <!-- Quick Accounts -->
+        <div id="chips"></div>
+
+
+        <!-- Email -->
+        <div class="sx-field">
+
+          <label for="em">
+            Email Address
+          </label>
+
+          <div class="sx-input-wrap">
+
+            <input
+              id="em"
+              class="sx-input"
+              type="email"
+              autocomplete="username"
+              placeholder="Enter your official email"
+            >
+
+          </div>
+
+        </div>
+
+
+        <!-- Password -->
+        <div class="sx-field">
+
+          <label for="pw">
+            Password
+          </label>
+
+          <div class="sx-input-wrap">
+
+            <input
+              id="pw"
+              class="sx-input"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Enter your password"
+            >
+
+            <button
+              type="button"
+              class="sx-password-toggle"
+              onclick="togglePassword()"
+            >
+              Show
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- Error -->
+        <div
+          id="le"
+          role="alert"
+        ></div>
+
+
+        <!-- Connection Status -->
+        <div
+          id="sy"
+          class="hint"
+        >
+          Connecting to secure portal...
+        </div>
+
+
+        <!-- Sign In -->
+        <button
+          type="button"
+          class="sx-login-btn btn p w"
+          onclick="login()"
+        >
+          Sign in securely
+        </button>
+
+
+        <!-- Forgot Password -->
+        <div class="sx-forgot">
+
+          <button
+            type="button"
+            onclick="forgotPassword()"
+          >
+            Forgot your password?
+          </button>
+
+        </div>
+
+
+        <!-- Security -->
+        <div class="sx-security">
+
+          <span class="sx-lock"></span>
+
+          Secure connection • Authorized users only
+
         </div>
 
       </div>
@@ -1250,262 +1347,227 @@ body{
   </div>
 
 
-  <!-- =====================================================
-       MOVING WELCOME BAR
-       ===================================================== -->
+  <!-- =========================================================
+       MAIN APPLICATION
+       IMPORTANT: IDs PRESERVED FOR app.js
+       ========================================================= -->
 
-  <div class="welcome-marquee">
+  <div
+    id="app"
+    class="hide"
+  >
 
-    <div class="welcome-track">
+    <!-- Sidebar -->
 
-      <span>
-        <b>SONAINFO</b>
-        Welcome to the Sonainfo Executive Portal
-      </span>
+    <aside id="sb">
 
-      <span>
-        <b>SECURE</b>
-        Executive access · Shared data · Live synchronization
-      </span>
+      <div class="logo">
+        Sona<b>info</b>
+      </div>
 
-      <span>
-        <b>SONAINFO</b>
-        Every case · Every rupee · Every decision
-      </span>
+      <nav id="nav"></nav>
 
-      <span>
-        <b>WELCOME</b>
-        Your organization. Your decisions. One executive workspace.
-      </span>
 
-      <!-- duplicate for continuous animation -->
+      <div class="me">
 
-      <span>
-        <b>SONAINFO</b>
-        Welcome to the Sonainfo Executive Portal
-      </span>
+        <b id="meN"></b>
 
-      <span>
-        <b>SECURE</b>
-        Executive access · Shared data · Live synchronization
-      </span>
+        <span id="meR"></span>
 
-      <span>
-        <b>SONAINFO</b>
-        Every case · Every rupee · Every decision
-      </span>
+        <br>
 
-      <span>
-        <b>WELCOME</b>
-        Your organization. Your decisions. One executive workspace.
-      </span>
+        <button
+          class="btn"
+          onclick="logout()"
+        >
+          Sign out
+        </button>
+
+      </div>
+
+    </aside>
+
+
+    <!-- Main -->
+
+    <main>
+
+      <header>
+
+        <button
+          id="menu"
+          onclick="sb.classList.toggle('open')"
+        >
+          ☰
+        </button>
+
+
+        <input
+          class="srch"
+          id="search"
+          type="search"
+          placeholder="Search portal..."
+        >
+
+
+        <span class="sp"></span>
+
+
+        <!-- Live Status -->
+        <span
+          class="tg"
+          id="pill"
+        >
+          ● Connecting
+        </span>
+
+
+        <button
+          class="btn"
+          onclick="theme()"
+        >
+          ◐ Theme
+        </button>
+
+      </header>
+
+
+      <!-- Application Content -->
+
+      <div id="c"></div>
+
+    </main>
+
+  </div>
+
+
+  <!-- =========================================================
+       MODAL
+       ========================================================= -->
+
+  <div id="mo">
+
+    <div class="md">
+
+      <header>
+
+        <h3 id="mt"></h3>
+
+        <button
+          class="btn"
+          onclick="cm()"
+        >
+          ✕
+        </button>
+
+      </header>
+
+
+      <div id="mb"></div>
+
+      <div id="mf"></div>
 
     </div>
 
   </div>
 
-</div>
 
+  <!-- Toast -->
 
-<!-- =======================================================
-     MAIN APPLICATION
-     IMPORTANT:
-     IDs BELOW MUST STAY COMPATIBLE WITH app.js
-     ======================================================= -->
+  <div id="ts"></div>
 
-<div id="app" class="hide">
 
-  <!-- SIDEBAR -->
+  <!-- =========================================================
+       IMPORTANT SCRIPT ORDER
+       =========================================================
 
-  <aside id="sb">
+       sync.js MUST load BEFORE app.js
 
-    <div class="logo">
-      Sona<b>info</b>
-    </div>
+       DO NOT put firebase-config.js here.
+       DO NOT add Firebase scripts.
+       ========================================================= -->
 
-    <nav id="nav"></nav>
+  <script src="sync.js"></script>
 
-    <div class="me">
+  <script src="app.js"></script>
 
-      <b id="meN"></b>
 
-      <span id="meR"></span>
+  <!-- =========================================================
+       SMALL UI HELPERS
+       ========================================================= -->
 
-      <br>
+  <script>
 
-      <button
-        class="btn"
-        style="margin-top:8px;padding:4px 10px"
-        onclick="logout()"
-      >
-        Sign out
-      </button>
+    function togglePassword() {
 
-    </div>
+      const input = document.getElementById("pw");
+      const button =
+        document.querySelector(".sx-password-toggle");
 
-  </aside>
+      if (!input || !button) return;
 
+      if (input.type === "password") {
 
-  <!-- MAIN -->
+        input.type = "text";
+        button.textContent = "Hide";
 
-  <main>
+      } else {
 
-    <header>
-
-      <button
-        class="btn"
-        id="menu"
-        onclick="sb.classList.toggle('open')"
-        aria-label="Menu"
-      >
-        ☰
-      </button>
-
-
-      <input
-        class="srch"
-        placeholder="Search employees..."
-        onkeydown="if(event.key==='Enter'&&can('employees')){E.q=this.value;E.p=0;go('employees')}"
-      >
-
-
-      <span class="sp"></span>
-
-
-      <!-- LIVE SYNC STATUS -->
-
-      <span
-        class="tg"
-        id="pill"
-        title="Shows whether this device is connected to shared data"
-      >
-        ...
-      </span>
-
-
-      <!-- THEME -->
-
-      <button
-        class="btn"
-        onclick="theme()"
-      >
-        ◐ Theme
-      </button>
-
-    </header>
-
-
-    <!-- PAGE CONTENT -->
-
-    <div id="c"></div>
-
-  </main>
-
-</div>
-
-
-<!-- =======================================================
-     MODAL
-     ======================================================= -->
-
-<div id="mo">
-
-  <div class="md">
-
-    <header>
-
-      <h3 id="mt"></h3>
-
-      <button
-        class="btn"
-        onclick="cm()"
-        aria-label="Close"
-      >
-        ✕
-      </button>
-
-    </header>
-
-
-    <div id="mb"></div>
-
-    <div id="mf"></div>
-
-  </div>
-
-</div>
-
-
-<!-- =======================================================
-     TOASTS
-     ======================================================= -->
-
-<div id="ts"></div>
-
-
-<!-- =======================================================
-     IMPORTANT SCRIPT ORDER
-     
-     sync.js MUST LOAD BEFORE app.js
-     ======================================================= -->
-
-<script src="sync.js"></script>
-
-<script src="app.js"></script>
-
-
-<!-- =======================================================
-     SMALL LOGIN ENHANCEMENTS
-     Does NOT replace app.js or sync.js
-     ======================================================= -->
-
-<script>
-
-(function(){
-
-  /*
-   * Keep the login screen smooth.
-   * These helpers do not touch authentication.
-   */
-
-  const email = document.getElementById("em");
-  const password = document.getElementById("pw");
-
-  if(email){
-
-    email.addEventListener("input", function(){
-
-      this.value = this.value.trim();
-
-    });
-
-  }
-
-
-  /*
-   * Press Enter from email field
-   * to move to password.
-   */
-
-  if(email && password){
-
-    email.addEventListener("keydown", function(e){
-
-      if(e.key === "Enter"){
-
-        e.preventDefault();
-
-        password.focus();
+        input.type = "password";
+        button.textContent = "Show";
 
       }
 
-    });
+    }
 
-  }
 
-})();
+    /* Enter key login */
 
-</script>
+    document.addEventListener(
+      "keydown",
+      function (event) {
+
+        if (
+          event.key === "Enter" &&
+          document.activeElement &&
+          (
+            document.activeElement.id === "em" ||
+            document.activeElement.id === "pw"
+          )
+        ) {
+
+          if (
+            typeof window.login === "function"
+          ) {
+
+            window.login();
+
+          }
+
+        }
+
+      }
+    );
+
+
+    /* Prevent accidental form-like submit */
+
+    document.addEventListener(
+      "click",
+      function (event) {
+
+        const button =
+          event.target.closest(".sx-login-btn");
+
+        if (!button) return;
+
+        button.style.transform =
+          "translateY(0)";
+
+      }
+    );
+
+  </script>
 
 </body>
 </html>
