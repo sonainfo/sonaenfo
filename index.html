@@ -330,7 +330,34 @@ function migrate(){const old=S.cases.find(c=>c.id==='CASE-1004');if(old&&old.v==
  if(old)S.cases[S.cases.indexOf(old)]=c;else S.cases.push(c);
  log('Added CASE-1004: Kunal’s email hack, forwarded by IT Team to HOD');save()}
 window.addEventListener('error',e=>{const c=$('#c');if(c&&!c.innerHTML.trim()&&ME)c.innerHTML='<div class="cd"><div class="cb"><b>Something went wrong while loading this page.</b><p class="hint">Reload the page. If it keeps happening, tell the person who manages the portal this message: '+esc(e.message)+'</p></div></div>'});
-function ready(){pill();chips();$('#sy').textContent=DB?'Shared data is on. Every device sees the same cases, penalties and finance.':'Data is saved in this browser (works on GitHub Pages).';
+function applyNavyaCaseUpdate(){
+ const CASE_ID='CMP-20261009-ENWHQK';
+ const closedAt='09 Oct 2026, 10:21';
+ const note='The Disciplinary Committee has reviewed and closed this case. As per the information available to the committee, Ms. Navya voluntarily left the company. It was reported that she had received / was pursuing another employment opportunity. No further disciplinary action is required at this stage.';
+ let c=S.cases.find(x=>x.id===CASE_ID||x.token===CASE_ID);
+ if(!c){
+  c={id:CASE_ID,token:CASE_ID,title:'Disciplinary Case – Navya',against:'',dept:'Disciplinary Committee',sev:'Medium',desc:note,st:'Closed',holder:'Disciplinary Committee',h:[],facts:[['Case Number',CASE_ID],['Case Status','Closed'],['Closed By','Disciplinary Committee'],['Chairman','Informed'],['Final Action','Case Closed']]};
+  S.cases.push(c);
+ }else{
+  c.st='Closed'; c.holder='Disciplinary Committee'; c.desc=c.desc||note;
+  c.facts=c.facts||[];
+ }
+ c.facts=c.facts.filter(f=>!['Case Number','Case Status','Closed By','Chairman','Final Action'].includes(f[0]));
+ c.facts.push(['Case Number',CASE_ID],['Case Status','Closed'],['Closed By','Disciplinary Committee'],['Chairman','Informed'],['Final Action','Case Closed']);
+ c.h=c.h||[];
+ if(!c.h.some(x=>x.a==='Case closed by Disciplinary Committee')){
+  c.h.push({t:closedAt,by:'Disciplinary Committee',a:'Case closed by Disciplinary Committee',n:note});
+ }
+ const title='Disciplinary Committee Update: '+CASE_ID;
+ if(!S.ann.some(a=>a.title===title)){
+  S.ann.unshift({id:nid(S.ann),title,text:'Case '+CASE_ID+' has been closed by the Disciplinary Committee. The committee recorded that Ms. Navya voluntarily left the company and it was reported that she had received / was pursuing another employment opportunity. No further disciplinary action is required at this stage.',cat:'Disciplinary Committee',pin:true,date:'2026-10-09',by:'Disciplinary Committee',audience:'Chairman'});
+ }
+ const logText=CASE_ID+': closed by Disciplinary Committee';
+ if(!S.log.some(x=>x.a===logText))S.log.unshift({t:closedAt,a:logText,u:'Disciplinary Committee'});
+ save();
+}
+
+function ready(){pill();chips();applyNavyaCaseUpdate();$('#sy').textContent=DB?'Shared data is on. Every device sees the same cases, penalties and finance.':'Data is saved in this browser (works on GitHub Pages).';
  try{const u=S.users.find(x=>x.id===+sessionStorage.getItem('sona_u'));if(u)start(u,1)}catch(e){}}
 function refresh(){if(!ME)return;const u=S.users.find(x=>x.id===ME.id);if(!u){toast('Your account was removed.');logout();return}ME=u;$('#meN').textContent=u.name;$('#meR').textContent=u.role;chips();
  if(!$('#mo').classList.contains('on')&&view!=='employees')go(view);else if(view==='employees')go(view)}
