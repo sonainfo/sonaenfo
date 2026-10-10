@@ -1,4 +1,20 @@
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sonainfo Portal</title><meta name="theme-color" content="#0b1d2e"><meta name="description" content="Sonainfo Portal. Only authorised persons."><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230f766e'/%3E%3Ctext x='50' y='70' font-size='62' text-anchor='middle' fill='white' font-family='Georgia'%3ES%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:wght@500;600&display=swap">
+<style>
+:root{--bg:#eff2f6;--sf:#fff;--tx:#131f2e;--mu:#637085;--bd:#dfe4ec;--pr:#0f766e;--gd:#b8862b;--ok:#12803f;--wa:#b45309;--er:#c42b2b;--sb:#0b1624;--hv:#f3f5f9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#08101b;--sf:#101b2a;--tx:#e6ebf2;--mu:#93a1b5;--bd:#21304a;--hv:#16243a;--sb:#050a12}}
+:root[data-theme=dark]{--bg:#08101b;--sf:#101b2a;--tx:#e6ebf2;--mu:#93a1b5;--bd:#21304a;--hv:#16243a;--sb:#050a12}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--tx);font:14px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:600}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}
+.hide{display:none!important}
 :focus-visible{outline:2px solid var(--gd);outline-offset:2px}
 #login{min-height:100%;display:grid;place-items:center;padding:20px;background:radial-gradient(900px 500px at 12% 10%,#12413f,transparent),radial-gradient(800px 500px at 92% 92%,#3a2c0e,transparent),var(--sb)}
 .lg{width:100%;max-width:960px;display:grid;grid-template-columns:1.05fr 1fr;background:var(--sf);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.45)}
@@ -718,5 +734,49 @@ V.tokenbuyer=function(){injectTBStyles();loadSeats();if(!launchReady()){setTimeo
 })();
 
 </script>
+
+<!-- Sonainfo scheduled server-down condition: 5:00 PM local browser time -->
+<div id="serverDown5PM" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#050b14,#0b1d2e);color:#fff;align-items:center;justify-content:center;padding:24px;text-align:center;">
+  <div style="width:100%;max-width:620px;padding:42px 30px;border:1px solid rgba(230,194,110,.35);border-radius:22px;background:rgba(255,255,255,.06);box-shadow:0 30px 80px rgba(0,0,0,.45);">
+    <div style="font-size:58px;margin-bottom:10px;">⛔</div>
+    <div style="font-size:12px;letter-spacing:3px;text-transform:uppercase;color:#e6c26e;font-weight:700;">SONAINFO PORTAL</div>
+    <h1 style="font-family:Newsreader,Georgia,serif;font-size:38px;margin:8px 0 12px;">Server Down</h1>
+    <p style="font-size:17px;line-height:1.6;color:#c5d0de;margin:0 0 12px;">
+      The Sonainfo server has been taken down at <b style="color:#fff;">5:00 PM</b>.
+    </p>
+    <p id="serverDownTime5PM" style="font-size:13px;color:#93a1b5;margin:0;">
+      The portal is currently unavailable.
+    </p>
+  </div>
+</div>
+
+<script>
+(function(){
+  function enforceSonainfo5PM(){
+    var now = new Date();
+    var down = now.getHours() < 17;
+    var overlay = document.getElementById('serverDown5PM');
+    if(!overlay) return;
+
+    if(down){
+      overlay.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      var app = document.getElementById('app');
+      var login = document.getElementById('login');
+      if(app) app.style.display = 'none';
+      if(login) login.style.display = 'none';
+      var t = document.getElementById('serverDownTime5PM');
+      if(t) t.textContent = 'Server shutdown time: 5:00 PM · Current time: ' +
+        now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    }else{
+      overlay.style.display = 'none';
+    }
+  }
+
+  enforceSonainfo5PM();
+  setInterval(enforceSonainfo5PM,1000);
+})();
+</script>
+
 </body>
 </html>
